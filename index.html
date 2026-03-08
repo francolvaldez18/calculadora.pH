@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora pH | WWB</title>
+  <style>
+    :root {
+      --overlay-color: rgba(255, 255, 255, 0.76);
+      --panel-color: rgba(255, 255, 255, 0.9);
+      --panel-border: rgba(73, 119, 153, 0.2);
+      --text-primary: #093a63;
+      --text-secondary: #325f83;
+      --button-text: #ffffff;
+      --button-bg: #0d6eaa;
+      --button-bg-hover: #1285cb;
+      --error: #c62828;
+      --warning: #8a5a00;
+      --field-border: #8fb0c9;
+      --field-focus: #0d6eaa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-primary);
+      background-color: #e9edf2;
+    }
+
+    .app {
+      position: relative;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8rem 1.25rem 2rem;
+      overflow: hidden;
+    }
+
+    .background-image {
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(13, 110, 170, 0.12), transparent 35%),
+        radial-gradient(circle at 80% 40%, rgba(13, 110, 170, 0.08), transparent 38%),
+        linear-gradient(180deg, #f5f7fa 0%, #e8edf3 100%);
+    }
+
+    .background-logo {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: 0.13;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' viewBox='0 0 900 900'%3E%3Ctext x='50%25' y='45%25' text-anchor='middle' fill='%230b67a4' font-size='130' font-family='Segoe UI, Arial, sans-serif' font-weight='700'%3EPOSCO%3C/text%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='%230b67a4' font-size='90' font-family='Segoe UI, Arial, sans-serif' font-weight='700'%3EARGENTINA%3C/text%3E%3C/svg%3E");
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: min(72vw, 700px);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--overlay-color);
+      z-index: -1;
+    }
+
+    .top-logo {
+      position: absolute;
+      top: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(300px, 68vw);
+      filter: drop-shadow(0 5px 10px rgba(5, 43, 72, 0.15));
+    }
+
+    .screen {
+      display: none;
+      width: min(960px, 100%);
+      background: var(--panel-color);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: clamp(1.2rem, 4vw, 2.2rem);
+      box-shadow: 0 18px 35px rgba(9, 58, 99, 0.12);
+      text-align: left;
+    }
+
+    .screen.active { display: block; }
+
+    .header {
+      border-bottom: 1px solid rgba(73, 119, 153, 0.24);
+      padding-bottom: .7rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: clamp(1.2rem, 2.4vw, 1.9rem);
+      line-height: 1.35;
+      text-wrap: balance;
+    }
+
+    .subtitle {
+      margin: .65rem 0 0;
+      color: var(--text-secondary);
+      font-size: .98rem;
+      line-height: 1.5;
+    }
+
+    .language-label {
+      margin-top: .4rem;
+      margin-bottom: .85rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      color: #174e78;
+      font-size: 1.05rem;
+    }
+
+    .language-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: .9rem;
+      margin-bottom: .9rem;
+    }
+
+    .language-button,
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: .85rem 1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--button-text);
+      background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+      box-shadow: 0 8px 16px rgba(9, 58, 99, 0.2);
+    }
+
+    .language-button:hover,
+    .language-button:focus-visible,
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      background: linear-gradient(180deg, #1a92da, #0d6eaa);
+      box-shadow: 0 10px 22px rgba(9, 58, 99, 0.28);
+      outline: 2px solid rgba(13, 110, 170, 0.35);
+      outline-offset: 1px;
+    }
+
+    .language-button.active { background: linear-gradient(180deg, #0f8adb, #0a5f96); }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 4px 10px rgba(9, 58, 99, 0.18);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(180deg, #7ea1bb, #5f829b);
+    }
+
+    .actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: .6rem;
+    }
+
+    .tabs {
+      display: inline-flex;
+      background: rgba(13, 110, 170, 0.1);
+      border: 1px solid rgba(73, 119, 153, 0.3);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 1rem;
+      gap: 4px;
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 10px;
+      padding: .65rem 1rem;
+      background: transparent;
+      color: #1f5377;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      color: #ffffff;
+      background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
+      box-shadow: 0 8px 16px rgba(9, 58, 99, 0.18);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .field-grid,
+    .chem-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      text-align: left;
+    }
+
+    label {
+      color: #174e78;
+      font-weight: 700;
+      font-size: .95rem;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--field-border);
+      border-radius: 10px;
+      padding: .72rem .78rem;
+      font-size: 1rem;
+      color: #083154;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--field-focus);
+      box-shadow: 0 0 0 3px rgba(13, 110, 170, 0.16);
+    }
+
+    input.invalid {
+      border-color: var(--error);
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.16);
+    }
+
+    .error {
+      min-height: 18px;
+      color: var(--error);
+      font-size: .86rem;
+      margin: 0;
+    }
+
+    .note {
+      margin: .95rem 0 .2rem;
+      border-left: 4px solid #c48a1f;
+      background: rgba(255, 204, 102, 0.18);
+      color: var(--warning);
+      border-radius: 8px;
+      padding: .65rem .75rem;
+      font-size: .9rem;
+    }
+
+    .chem-block {
+      border: 1px solid rgba(73, 119, 153, 0.28);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.72);
+      padding: .9rem;
+    }
+
+    .chem-name {
+      margin: 0 0 .7rem;
+      font-size: 1.02rem;
+      color: #0b4f7f;
+      font-weight: 700;
+    }
+
+    .chem-name small {
+      font-weight: 600;
+      color: #5b7b96;
+    }
+
+    @media (max-width: 700px) {
+      .app { padding-top: 6.8rem; }
+      .screen { border-radius: 16px; }
+      .language-buttons,
+      .field-grid,
+      .chem-grid { grid-template-columns: 1fr; }
+      .actions { justify-content: stretch; }
+      .actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="background-image" aria-hidden="true"></div>
+    <div class="background-logo" aria-hidden="true"></div>
+    <div class="overlay" aria-hidden="true"></div>
+
+    <img
+      class="top-logo"
+      alt="Logo POSCO Argentina"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='240' viewBox='0 0 800 240'%3E%3Ctext x='50%25' y='48%25' text-anchor='middle' fill='%230b67a4' font-size='110' font-family='Segoe UI, Arial, sans-serif' font-weight='700'%3EPOSCO%3C/text%3E%3Ctext x='50%25' y='85%25' text-anchor='middle' fill='%230b67a4' font-size='72' font-family='Segoe UI, Arial, sans-serif' font-weight='700'%3EARGENTINA%3C/text%3E%3C/svg%3E"
+    />
+
+    <section id="screen-language" class="screen active">
+      <header class="header">
+        <h1 class="title" id="main-title" data-i18n="appTitle">Calculadora pH - WWT - Utilities - Departamento de Producción LH Güemes</h1>
+        <p class="subtitle" id="main-description" data-i18n="langDescription">Cálculo de reactivo de neutralización para la planta de tratamiento de aguas.</p>
+      </header>
+
+      <p class="language-label" id="language-label" data-i18n="language">Seleccionar idioma</p>
+
+      <div class="language-buttons" role="group" aria-label="Selección de idioma">
+        <button class="language-button" data-lang="en">English</button>
+        <button class="language-button active" data-lang="es">Español</button>
+        <button class="language-button" data-lang="ko">한국어</button>
+      </div>
+
+      <div class="actions" style="justify-content:center;">
+        <button id="startBtn" class="btn" data-i18n="start">Siguiente</button>
+      </div>
+    </section>
+
+    <section id="screen-initial-state" class="screen">
+      <header class="header">
+        <h2 class="title" data-i18n="poolStatusTitle">Estado de la pileta WWB</h2>
+        <p class="subtitle" data-i18n="poolStatusSubtitle">Ingrese condiciones iniciales y parámetros de reactivos.</p>
+      </header>
+
+      <nav class="tabs" aria-label="Secciones">
+        <button class="tab active" type="button" data-tab="estado" data-i18n="tabStatus">Estado inicial</button>
+        <button class="tab" type="button" data-tab="quimicos" data-i18n="tabChemicals">Químicos</button>
+      </nav>
+
+      <div id="panel-estado" class="panel active">
+        <div class="field-grid">
+          <div class="field">
+            <label for="nivelInput" data-i18n="level">Nivel</label>
+            <input id="nivelInput" type="number" inputmode="decimal" step="any" min="1200" max="4000" placeholder="1200 - 4000" />
+            <p class="error" id="nivelError" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label for="phInput" data-i18n="ph">pH</label>
+            <input id="phInput" type="number" inputmode="decimal" step="any" min="0" max="14" placeholder="0 - 14" />
+            <p class="error" id="phError" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <p class="note" data-i18n="reactiveNote">NOTA: si hubo cambio de reactivos, modificar en la pestaña 'Químicos'.</p>
+
+        <div class="actions">
+          <button id="nextBtn" class="btn" type="button" disabled data-i18n="next">Siguiente</button>
+        </div>
+      </div>
+
+      <div id="panel-quimicos" class="panel">
+        <div class="chem-grid">
+          <article class="chem-block">
+            <h3 class="chem-name">H2SO4 <small data-i18n="acidNeutralizer">Neutralizante ácido</small></h3>
+            <div class="field">
+              <label for="acidConcentration" data-i18n="concentration">Concentración</label>
+              <select id="acidConcentration">
+                <option value="98">98%</option>
+                <option value="90">90%</option>
+                <option value="80">80%</option>
+                <option value="70">70%</option>
+                <option value="60">60%</option>
+                <option value="50">50%</option>
+                <option value="40">40%</option>
+                <option value="30">30%</option>
+              </select>
+            </div>
+          </article>
+
+          <article class="chem-block">
+            <h3 class="chem-name">NaOH <small data-i18n="basicNeutralizer">Neutralizante básico</small></h3>
+            <div class="field">
+              <label for="baseConcentration" data-i18n="concentration">Concentración</label>
+              <select id="baseConcentration">
+                <option value="10">10%</option>
+                <option value="20">20%</option>
+                <option value="30" selected>30%</option>
+                <option value="40">40%</option>
+                <option value="50">50%</option>
+              </select>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-placeholder" class="screen">
+      <header class="header">
+        <h2 class="title" data-i18n="placeholderTitle">Próxima pantalla (temporal)</h2>
+        <p class="subtitle" data-i18n="placeholderText">Navegación OK. Aquí se implementará el siguiente paso del flujo.</p>
+      </header>
+      <div class="actions">
+        <button id="backBtn" class="btn btn-secondary" type="button" data-i18n="back">Volver</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const translations = {
+      es: {
+        appTitle: "Calculadora pH - WWT - Utilities - Departamento de Producción LH Güemes",
+        langDescription: "Cálculo de reactivo de neutralización para la planta de tratamiento de aguas.",
+        language: "Seleccionar idioma",
+        start: "Siguiente",
+        poolStatusTitle: "Estado de la pileta WWB",
+        poolStatusSubtitle: "Ingrese condiciones iniciales y parámetros de reactivos.",
+        tabStatus: "Estado inicial",
+        tabChemicals: "Químicos",
+        level: "Nivel",
+        ph: "pH",
+        reactiveNote: "NOTA: si hubo cambio de reactivos, modificar en la pestaña 'Químicos'.",
+        next: "Siguiente",
+        acidNeutralizer: "Neutralizante ácido",
+        basicNeutralizer: "Neutralizante básico",
+        concentration: "Concentración",
+        placeholderTitle: "Próxima pantalla (temporal)",
+        placeholderText: "Navegación OK. Aquí se implementará el siguiente paso del flujo.",
+        back: "Volver",
+        errLevelLow: "La pileta tiene nivel bajo.",
+        errLevelHigh: "La pileta está muy alta.",
+        errLevelInvalid: "Ingrese un valor numérico válido para nivel.",
+        errPhInvalid: "El pH debe estar entre 0 y 14."
+      },
+      en: {
+        appTitle: "pH Calculator - WWT - Utilities - LH Güemes Production Department",
+        langDescription: "Neutralization reagent calculation for the water treatment plant.",
+        language: "Select language",
+        start: "Next",
+        poolStatusTitle: "WWB Pool Status",
+        poolStatusSubtitle: "Enter initial conditions and reagent parameters.",
+        tabStatus: "Initial status",
+        tabChemicals: "Chemicals",
+        level: "Level",
+        ph: "pH",
+        reactiveNote: "NOTE: if reagents changed, update under the 'Chemicals' tab.",
+        next: "Next",
+        acidNeutralizer: "Acid neutralizer",
+        basicNeutralizer: "Base neutralizer",
+        concentration: "Concentration",
+        placeholderTitle: "Next screen (placeholder)",
+        placeholderText: "Navigation OK. The next workflow step will be added here.",
+        back: "Back",
+        errLevelLow: "The pool level is too low.",
+        errLevelHigh: "The pool level is too high.",
+        errLevelInvalid: "Enter a valid numeric level.",
+        errPhInvalid: "pH must be between 0 and 14."
+      },
+      ko: {
+        appTitle: "pH 계산기 - WWT - Utilities - LH Güemes 생산 부서",
+        langDescription: "수처리 플랜트용 중화 시약 계산.",
+        language: "언어 선택",
+        start: "다음",
+        poolStatusTitle: "WWB 풀 상태",
+        poolStatusSubtitle: "초기 조건과 시약 파라미터를 입력하세요.",
+        tabStatus: "초기 상태",
+        tabChemicals: "화학약품",
+        level: "수위",
+        ph: "pH",
+        reactiveNote: "참고: 시약 변경 시 '화학약품' 탭에서 수정하세요.",
+        next: "다음",
+        acidNeutralizer: "산성 중화제",
+        basicNeutralizer: "염기성 중화제",
+        concentration: "농도",
+        placeholderTitle: "다음 화면 (임시)",
+        placeholderText: "이후 단계가 여기에 구현됩니다.",
+        back: "뒤로",
+        errLevelLow: "풀 수위가 낮습니다.",
+        errLevelHigh: "풀 수위가 너무 높습니다.",
+        errLevelInvalid: "유효한 숫자 수위를 입력하세요.",
+        errPhInvalid: "pH는 0에서 14 사이여야 합니다."
+      }
+    };
+
+    const state = {
+      language: "es",
+      initial: { level: "", ph: "" },
+      chemicals: {
+        acid: { name: "H2SO4", concentration: 98 },
+        base: { name: "NaOH", concentration: 30 }
+      },
+      validation: { levelValid: false, phValid: false }
+    };
+
+    const screens = {
+      language: document.getElementById("screen-language"),
+      initialState: document.getElementById("screen-initial-state"),
+      placeholder: document.getElementById("screen-placeholder")
+    };
+
+    const elements = {
+      languageButtons: Array.from(document.querySelectorAll(".language-button")),
+      startBtn: document.getElementById("startBtn"),
+      tabs: Array.from(document.querySelectorAll(".tab")),
+      panels: {
+        estado: document.getElementById("panel-estado"),
+        quimicos: document.getElementById("panel-quimicos")
+      },
+      level: document.getElementById("nivelInput"),
+      ph: document.getElementById("phInput"),
+      levelError: document.getElementById("nivelError"),
+      phError: document.getElementById("phError"),
+      nextBtn: document.getElementById("nextBtn"),
+      acidConcentration: document.getElementById("acidConcentration"),
+      baseConcentration: document.getElementById("baseConcentration"),
+      backBtn: document.getElementById("backBtn")
+    };
+
+    function applyTranslations() {
+      const dict = translations[state.language] || translations.es;
+      document.documentElement.lang = state.language;
+      document.querySelectorAll("[data-i18n]").forEach(node => {
+        const key = node.getAttribute("data-i18n");
+        if (dict[key]) node.textContent = dict[key];
+      });
+      validateLevel();
+      validatePh();
+    }
+
+    function showScreen(key) {
+      Object.values(screens).forEach(screen => screen.classList.remove("active"));
+      screens[key].classList.add("active");
+    }
+
+    function showTab(tabName) {
+      elements.tabs.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabName));
+      Object.entries(elements.panels).forEach(([name, panel]) => {
+        panel.classList.toggle("active", name === tabName);
+      });
+    }
+
+    function setFieldError(input, container, message) {
+      container.textContent = message || "";
+      input.classList.toggle("invalid", Boolean(message));
+    }
+
+    function validateLevel() {
+      const dict = translations[state.language] || translations.es;
+      const raw = elements.level.value.trim();
+      state.initial.level = raw;
+
+      if (raw === "") {
+        setFieldError(elements.level, elements.levelError, "");
+        state.validation.levelValid = false;
+        updateNextButton();
+        return;
+      }
+
+      const value = Number(raw);
+      if (Number.isNaN(value)) {
+        setFieldError(elements.level, elements.levelError, dict.errLevelInvalid);
+        state.validation.levelValid = false;
+      } else if (value < 1200) {
+        setFieldError(elements.level, elements.levelError, dict.errLevelLow);
+        state.validation.levelValid = false;
+      } else if (value > 4000) {
+        setFieldError(elements.level, elements.levelError, dict.errLevelHigh);
+        state.validation.levelValid = false;
+      } else {
+        setFieldError(elements.level, elements.levelError, "");
+        state.validation.levelValid = true;
+      }
+      updateNextButton();
+    }
+
+    function validatePh() {
+      const dict = translations[state.language] || translations.es;
+      const raw = elements.ph.value.trim();
+      state.initial.ph = raw;
+
+      if (raw === "") {
+        setFieldError(elements.ph, elements.phError, "");
+        state.validation.phValid = false;
+        updateNextButton();
+        return;
+      }
+
+      const value = Number(raw);
+      if (Number.isNaN(value) || value < 0 || value > 14) {
+        setFieldError(elements.ph, elements.phError, dict.errPhInvalid);
+        state.validation.phValid = false;
+      } else {
+        setFieldError(elements.ph, elements.phError, "");
+        state.validation.phValid = true;
+      }
+      updateNextButton();
+    }
+
+    function updateNextButton() {
+      elements.nextBtn.disabled = !(state.validation.levelValid && state.validation.phValid);
+    }
+
+    elements.languageButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.language = btn.dataset.lang;
+        elements.languageButtons.forEach(node => node.classList.toggle("active", node === btn));
+        applyTranslations();
+      });
+    });
+
+    elements.startBtn.addEventListener("click", () => {
+      applyTranslations();
+      showScreen("initialState");
+      showTab("estado");
+    });
+
+    elements.tabs.forEach(tab => tab.addEventListener("click", () => showTab(tab.dataset.tab)));
+
+    ["input", "blur"].forEach(eventName => {
+      elements.level.addEventListener(eventName, validateLevel);
+      elements.ph.addEventListener(eventName, validatePh);
+    });
+
+    elements.acidConcentration.addEventListener("change", event => {
+      state.chemicals.acid.concentration = Number(event.target.value);
+    });
+
+    elements.baseConcentration.addEventListener("change", event => {
+      state.chemicals.base.concentration = Number(event.target.value);
+    });
+
+    elements.nextBtn.addEventListener("click", () => {
+      validateLevel();
+      validatePh();
+      if (!state.validation.levelValid || !state.validation.phValid) return;
+      showScreen("placeholder");
+    });
+
+    elements.backBtn.addEventListener("click", () => showScreen("initialState"));
+
+    applyTranslations();
+  </script>
+</body>
+</html>
