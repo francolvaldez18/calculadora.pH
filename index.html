@@ -185,9 +185,70 @@
       .warn { color: var(--warning); font-weight: 700; }
       .error { margin-top: 6px; font-size: .85rem; color: var(--danger); }
 
+      .welcome-main {
+        text-align: center;
+        padding: clamp(0.6rem, 1.5vw, 1rem) 0;
+      }
+      .welcome-main h2 {
+        margin: 0;
+        font-size: clamp(1.35rem, 2.5vw, 2.15rem);
+        line-height: 1.35;
+      }
+      .welcome-description {
+        margin: 1rem auto 0;
+        max-width: 70ch;
+        color: var(--text-secondary);
+        font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+        line-height: 1.55;
+      }
+      .language-label {
+        margin-top: 1.8rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: #174e78;
+        font-size: clamp(1rem, 1.8vw, 1.2rem);
+      }
+      .language-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 0.9rem;
+      }
+      .language-button {
+        border: none;
+        border-radius: 12px;
+        padding: 0.95rem 1rem;
+        font-size: clamp(1rem, 2vw, 1.05rem);
+        font-weight: 700;
+        color: var(--button-text);
+        background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        box-shadow: 0 8px 16px rgba(9, 58, 99, 0.2);
+      }
+      .language-button:hover,
+      .language-button:focus-visible {
+        transform: translateY(-2px);
+        background: linear-gradient(180deg, #1a92da, #0d6eaa);
+        box-shadow: 0 10px 22px rgba(9,58,99,0.28);
+        outline: 2px solid rgba(13,110,170,0.35);
+        outline-offset: 1px;
+      }
+      .language-button.active {
+        background: linear-gradient(180deg, #0f8adb, #0a5f96);
+        box-shadow: 0 10px 22px rgba(9,58,99,0.3);
+      }
+      .welcome-actions {
+        margin-top: 1.1rem;
+        display: flex;
+        justify-content: center;
+      }
+      .welcome-next { min-width: min(280px, 100%); }
+
       @media (max-width: 860px) {
         .grid, .grid-3, .cards { grid-template-columns: 1fr; }
         .app-screen { padding-top: 6.5rem; }
+        .language-buttons { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -207,15 +268,17 @@
         <div class="tabs" id="tabs"></div>
 
         <section class="screen" id="screen-language">
-          <h3 data-i18n="languageTitle"></h3>
-          <div class="grid">
-            <div class="field">
-              <label data-i18n="languageLabel"></label>
-              <select id="languageSelect">
-                <option value="es">Español</option>
-                <option value="en">English</option>
-                <option value="ko">한국어</option>
-              </select>
+          <div class="welcome-main">
+            <h2 id="main-title"></h2>
+            <p class="welcome-description" id="main-description"></p>
+            <p class="language-label" id="language-label"></p>
+            <div class="language-buttons" role="group" aria-label="Selección de idioma">
+              <button class="language-button" data-lang="en" id="langBtnEn"></button>
+              <button class="language-button" data-lang="es" id="langBtnEs"></button>
+              <button class="language-button" data-lang="ko" id="langBtnKo"></button>
+            </div>
+            <div class="welcome-actions">
+              <button class="btn welcome-next" id="welcomeNextButton" type="button"></button>
             </div>
           </div>
         </section>
@@ -282,7 +345,7 @@
           <div class="notice warn" id="overflowWarn" style="display:none;"></div>
         </section>
 
-        <div class="nav">
+        <div class="nav" id="globalNav">
           <button class="btn" id="btnHome" data-i18n="homeBtn"></button>
           <div class="nav-right">
             <button class="btn" id="btnBack" data-i18n="backBtn"></button>
@@ -305,9 +368,9 @@
       CAL.MM_PER_M3 = CAL.MM_EQ_M3_NUM / CAL.MM_EQ_M3_DEN;
 
       const tr = {
-        es: {appTitle:'Calculadora de Neutralización de pH',appSubtitle:'Estimación estequiométrica ideal',languageTitle:'Selección de idioma',languageLabel:'Idioma',taskTitle:'Selección de tarea',taskLabel:'Tarea',tankTitle:'Estado de la pileta',levelMm:'Nivel (mm)',volumeM3:'Volumen (m³)',phLabel:'pH',volumeHint:'Referencia fija: 10 m³ = 166.66 mm.',effluentsTitle:'Efluentes de ingreso',eff1Vol:'Efluente 1 volumen (m³)',eff1Ph:'Efluente 1 pH',eff1Kind:'Efluente 1 tipo',eff2Vol:'Efluente 2 volumen (m³)',eff2Ph:'Efluente 2 pH',eff2Kind:'Efluente 2 tipo',chemicalsTitle:'Químicos',naohConcentration:'Concentración NaOH (% p/p)',h2so4Concentration:'Concentración H2SO4 (% p/p)',resultsTitle:'Resultados',stateCard:'Estado actual/final de la pileta',methodCard:'Método de neutralización',reagentCard:'Reactivo/Efluente requerido',calcCard:'Datos técnicos de cálculo',neutralizationMode:'Modo de neutralización',modeLabel:'Modo',modeChemicals:'Químicos',modeEffluent:'Efluente',requiredAmount:'Cantidad estimada requerida',idealLegend:'El cálculo corresponde a una estimación estequiométrica ideal y no contempla alcalinidad, buffers ni reacciones secundarias.',homeBtn:'Inicio',backBtn:'Volver',nextBtn:'Siguiente',tabLanguage:'Idioma',tabTask:'Tarea',tabState:'Estado/Efluentes',tabChem:'Químicos',tabRes:'Resultados',taskReception:'Recepción de Efluentes',taskConditioning:'Acondicionamiento de la pileta',acidic:'Ácido',basic:'Básico',errSelectTask:'Seleccione una tarea.',errTank:'Complete estado de pileta válido (nivel/volumen/pH).',errPh:'El pH debe estar entre 0 y 14.',nearNeutral:'pH cercano a 7: ajuste mínimo o no requerido.',species:'Especie neutralizada',eqNeutralize:'Equivalentes a neutralizar',methodCalc:'Método',overflow:'Advertencia: el nivel proyectado supera la altura máxima de la pileta.',neutralizerPhLH:'pH del efluente LH (base)',neutralizerPhIX:'pH del efluente IX (ácido)',invalidNeutralizerPh:'Ingrese pH válido entre 0 y 14.',stoichMethodText:'Estequiometría ideal con pH objetivo',typeLabel:'Tipo',concentrationLabel:'Concentración',referencePhLabel:'pH referencia',volumeLabel:'Volumen',levelDeltaLabel:'Δ nivel',projectedLevelLabel:'Nivel proyectado'},
-        en: {appTitle:'pH Neutralization Calculator',appSubtitle:'Ideal stoichiometric estimation',languageTitle:'Language selection',languageLabel:'Language',taskTitle:'Task selection',taskLabel:'Task',tankTitle:'Tank state',levelMm:'Level (mm)',volumeM3:'Volume (m³)',phLabel:'pH',volumeHint:'Fixed reference: 10 m³ = 166.66 mm.',effluentsTitle:'Incoming effluents',eff1Vol:'Effluent 1 volume (m³)',eff1Ph:'Effluent 1 pH',eff1Kind:'Effluent 1 type',eff2Vol:'Effluent 2 volume (m³)',eff2Ph:'Effluent 2 pH',eff2Kind:'Effluent 2 type',chemicalsTitle:'Chemicals',naohConcentration:'NaOH concentration (% w/w)',h2so4Concentration:'H2SO4 concentration (% w/w)',resultsTitle:'Results',stateCard:'Current/final tank state',methodCard:'Neutralization mode',reagentCard:'Required reagent/effluent',calcCard:'Technical calculation data',neutralizationMode:'Neutralization mode',modeLabel:'Mode',modeChemicals:'Chemicals',modeEffluent:'Effluent',requiredAmount:'Estimated required amount',idealLegend:'This is an ideal stoichiometric estimate and does not account for alkalinity, buffers, or side reactions.',homeBtn:'Home',backBtn:'Back',nextBtn:'Next',tabLanguage:'Language',tabTask:'Task',tabState:'State/Effluents',tabChem:'Chemicals',tabRes:'Results',taskReception:'Effluent Reception',taskConditioning:'Tank Conditioning',acidic:'Acidic',basic:'Basic',errSelectTask:'Please select a task.',errTank:'Provide valid tank state (level/volume/pH).',errPh:'pH must be between 0 and 14.',nearNeutral:'pH close to 7: minimal or no adjustment required.',species:'Neutralized species',eqNeutralize:'Estimated equivalents',methodCalc:'Method',overflow:'Warning: projected level exceeds tank maximum height.',neutralizerPhLH:'LH effluent pH (base)',neutralizerPhIX:'IX effluent pH (acid)',invalidNeutralizerPh:'Enter a valid pH between 0 and 14.',stoichMethodText:'Ideal stoichiometry with target pH',typeLabel:'Type',concentrationLabel:'Concentration',referencePhLabel:'Reference pH',volumeLabel:'Volume',levelDeltaLabel:'Level Δ',projectedLevelLabel:'Projected level'},
-        ko: {appTitle:'pH 중화 계산기',appSubtitle:'이상적인 화학양론 추정',languageTitle:'언어 선택',languageLabel:'언어',taskTitle:'작업 선택',taskLabel:'작업',tankTitle:'탱크 상태',levelMm:'수위 (mm)',volumeM3:'부피 (m³)',phLabel:'pH',volumeHint:'고정 기준: 10 m³ = 166.66 mm.',effluentsTitle:'유입 폐수',eff1Vol:'폐수 1 부피 (m³)',eff1Ph:'폐수 1 pH',eff1Kind:'폐수 1 유형',eff2Vol:'폐수 2 부피 (m³)',eff2Ph:'폐수 2 pH',eff2Kind:'폐수 2 유형',chemicalsTitle:'약품',naohConcentration:'NaOH 농도 (% w/w)',h2so4Concentration:'H2SO4 농도 (% w/w)',resultsTitle:'결과',stateCard:'현재/최종 탱크 상태',methodCard:'중화 방식',reagentCard:'필요 시약/폐수',calcCard:'기술 계산 데이터',neutralizationMode:'중화 모드',modeLabel:'모드',modeChemicals:'약품',modeEffluent:'폐수',requiredAmount:'예상 필요량',idealLegend:'본 계산은 이상적인 화학양론 추정이며 알칼리도, 완충, 부반응을 고려하지 않습니다.',homeBtn:'홈',backBtn:'뒤로',nextBtn:'다음',tabLanguage:'언어',tabTask:'작업',tabState:'상태/폐수',tabChem:'약품',tabRes:'결과',taskReception:'폐수 수령',taskConditioning:'탱크 컨디셔닝',acidic:'산성',basic:'염기성',errSelectTask:'작업을 선택하세요.',errTank:'유효한 탱크 상태(수위/부피/pH)를 입력하세요.',errPh:'pH는 0~14 범위여야 합니다.',nearNeutral:'pH가 7에 가까워 조정이 거의 필요하지 않습니다.',species:'중화 대상 종',eqNeutralize:'중화 등가량',methodCalc:'방법',overflow:'경고: 예상 수위가 탱크 최대 높이를 초과합니다.',neutralizerPhLH:'LH 폐수 pH (염기)',neutralizerPhIX:'IX 폐수 pH (산)',invalidNeutralizerPh:'0~14 사이의 유효한 pH를 입력하세요.',stoichMethodText:'목표 pH 기반 이상 화학양론',typeLabel:'유형',concentrationLabel:'농도',referencePhLabel:'기준 pH',volumeLabel:'부피',levelDeltaLabel:'수위 Δ',projectedLevelLabel:'예상 수위'}
+        es: {appTitle:'Calculadora de Neutralización de pH',appSubtitle:'Estimación estequiométrica ideal',languageTitle:'Selección de idioma',languageLabel:'Idioma',taskTitle:'Selección de tarea',taskLabel:'Tarea',tankTitle:'Estado de la pileta',levelMm:'Nivel (mm)',volumeM3:'Volumen (m³)',phLabel:'pH',volumeHint:'Referencia fija: 10 m³ = 166.66 mm.',effluentsTitle:'Efluentes de ingreso',eff1Vol:'Efluente 1 volumen (m³)',eff1Ph:'Efluente 1 pH',eff1Kind:'Efluente 1 tipo',eff2Vol:'Efluente 2 volumen (m³)',eff2Ph:'Efluente 2 pH',eff2Kind:'Efluente 2 tipo',chemicalsTitle:'Químicos',naohConcentration:'Concentración NaOH (% p/p)',h2so4Concentration:'Concentración H2SO4 (% p/p)',resultsTitle:'Resultados',stateCard:'Estado actual/final de la pileta',methodCard:'Método de neutralización',reagentCard:'Reactivo/Efluente requerido',calcCard:'Datos técnicos de cálculo',neutralizationMode:'Modo de neutralización',modeLabel:'Modo',modeChemicals:'Químicos',modeEffluent:'Efluente',requiredAmount:'Cantidad estimada requerida',idealLegend:'El cálculo corresponde a una estimación estequiométrica ideal y no contempla alcalinidad, buffers ni reacciones secundarias.',homeBtn:'Inicio',backBtn:'Volver',nextBtn:'Siguiente',tabLanguage:'Idioma',tabTask:'Tarea',tabState:'Estado/Efluentes',tabChem:'Químicos',tabRes:'Resultados',taskReception:'Recepción de Efluentes',taskConditioning:'Acondicionamiento de la pileta',acidic:'Ácido',basic:'Básico',errSelectTask:'Seleccione una tarea.',errTank:'Complete estado de pileta válido (nivel/volumen/pH).',errPh:'El pH debe estar entre 0 y 14.',nearNeutral:'pH cercano a 7: ajuste mínimo o no requerido.',species:'Especie neutralizada',eqNeutralize:'Equivalentes a neutralizar',methodCalc:'Método',overflow:'Advertencia: el nivel proyectado supera la altura máxima de la pileta.',neutralizerPhLH:'pH del efluente LH (base)',neutralizerPhIX:'pH del efluente IX (ácido)',invalidNeutralizerPh:'Ingrese pH válido entre 0 y 14.',stoichMethodText:'Estequiometría ideal con pH objetivo',typeLabel:'Tipo',concentrationLabel:'Concentración',referencePhLabel:'pH referencia',volumeLabel:'Volumen',levelDeltaLabel:'Δ nivel',projectedLevelLabel:'Nivel proyectado',welcomeTitle:'Calculadora pH - WWT - Utilities - Departamento de Producción LH Güemes',welcomeDescription:'Cálculo de reactivo de neutralización para la planta de tratamiento de aguas.',selectLanguageText:'Seleccionar idioma',langEnglish:'English',langSpanish:'Español',langKorean:'한국어'},
+        en: {appTitle:'pH Neutralization Calculator',appSubtitle:'Ideal stoichiometric estimation',languageTitle:'Language selection',languageLabel:'Language',taskTitle:'Task selection',taskLabel:'Task',tankTitle:'Tank state',levelMm:'Level (mm)',volumeM3:'Volume (m³)',phLabel:'pH',volumeHint:'Fixed reference: 10 m³ = 166.66 mm.',effluentsTitle:'Incoming effluents',eff1Vol:'Effluent 1 volume (m³)',eff1Ph:'Effluent 1 pH',eff1Kind:'Effluent 1 type',eff2Vol:'Effluent 2 volume (m³)',eff2Ph:'Effluent 2 pH',eff2Kind:'Effluent 2 type',chemicalsTitle:'Chemicals',naohConcentration:'NaOH concentration (% w/w)',h2so4Concentration:'H2SO4 concentration (% w/w)',resultsTitle:'Results',stateCard:'Current/final tank state',methodCard:'Neutralization mode',reagentCard:'Required reagent/effluent',calcCard:'Technical calculation data',neutralizationMode:'Neutralization mode',modeLabel:'Mode',modeChemicals:'Chemicals',modeEffluent:'Effluent',requiredAmount:'Estimated required amount',idealLegend:'This is an ideal stoichiometric estimate and does not account for alkalinity, buffers, or side reactions.',homeBtn:'Home',backBtn:'Back',nextBtn:'Next',tabLanguage:'Language',tabTask:'Task',tabState:'State/Effluents',tabChem:'Chemicals',tabRes:'Results',taskReception:'Effluent Reception',taskConditioning:'Tank Conditioning',acidic:'Acidic',basic:'Basic',errSelectTask:'Please select a task.',errTank:'Provide valid tank state (level/volume/pH).',errPh:'pH must be between 0 and 14.',nearNeutral:'pH close to 7: minimal or no adjustment required.',species:'Neutralized species',eqNeutralize:'Estimated equivalents',methodCalc:'Method',overflow:'Warning: projected level exceeds tank maximum height.',neutralizerPhLH:'LH effluent pH (base)',neutralizerPhIX:'IX effluent pH (acid)',invalidNeutralizerPh:'Enter a valid pH between 0 and 14.',stoichMethodText:'Ideal stoichiometry with target pH',typeLabel:'Type',concentrationLabel:'Concentration',referencePhLabel:'Reference pH',volumeLabel:'Volume',levelDeltaLabel:'Level Δ',projectedLevelLabel:'Projected level',welcomeTitle:'pH Calculator - WWT - Utilities - LH Güemes Production Department',welcomeDescription:'Neutralization reagent calculation for the water treatment plant.',selectLanguageText:'Select language',langEnglish:'English',langSpanish:'Español',langKorean:'한국어'},
+        ko: {appTitle:'pH 중화 계산기',appSubtitle:'이상적인 화학양론 추정',languageTitle:'언어 선택',languageLabel:'언어',taskTitle:'작업 선택',taskLabel:'작업',tankTitle:'탱크 상태',levelMm:'수위 (mm)',volumeM3:'부피 (m³)',phLabel:'pH',volumeHint:'고정 기준: 10 m³ = 166.66 mm.',effluentsTitle:'유입 폐수',eff1Vol:'폐수 1 부피 (m³)',eff1Ph:'폐수 1 pH',eff1Kind:'폐수 1 유형',eff2Vol:'폐수 2 부피 (m³)',eff2Ph:'폐수 2 pH',eff2Kind:'폐수 2 유형',chemicalsTitle:'약품',naohConcentration:'NaOH 농도 (% w/w)',h2so4Concentration:'H2SO4 농도 (% w/w)',resultsTitle:'결과',stateCard:'현재/최종 탱크 상태',methodCard:'중화 방식',reagentCard:'필요 시약/폐수',calcCard:'기술 계산 데이터',neutralizationMode:'중화 모드',modeLabel:'모드',modeChemicals:'약품',modeEffluent:'폐수',requiredAmount:'예상 필요량',idealLegend:'본 계산은 이상적인 화학양론 추정이며 알칼리도, 완충, 부반응을 고려하지 않습니다.',homeBtn:'홈',backBtn:'뒤로',nextBtn:'다음',tabLanguage:'언어',tabTask:'작업',tabState:'상태/폐수',tabChem:'약품',tabRes:'결과',taskReception:'폐수 수령',taskConditioning:'탱크 컨디셔닝',acidic:'산성',basic:'염기성',errSelectTask:'작업을 선택하세요.',errTank:'유효한 탱크 상태(수위/부피/pH)를 입력하세요.',errPh:'pH는 0~14 범위여야 합니다.',nearNeutral:'pH가 7에 가까워 조정이 거의 필요하지 않습니다.',species:'중화 대상 종',eqNeutralize:'중화 등가량',methodCalc:'방법',overflow:'경고: 예상 수위가 탱크 최대 높이를 초과합니다.',neutralizerPhLH:'LH 폐수 pH (염기)',neutralizerPhIX:'IX 폐수 pH (산)',invalidNeutralizerPh:'0~14 사이의 유효한 pH를 입력하세요.',stoichMethodText:'목표 pH 기반 이상 화학양론',typeLabel:'유형',concentrationLabel:'농도',referencePhLabel:'기준 pH',volumeLabel:'부피',levelDeltaLabel:'수위 Δ',projectedLevelLabel:'예상 수위',welcomeTitle:'pH 계산기 - WWT - Utilities - LH Güemes 생산 부서',welcomeDescription:'수처리 플랜트용 중화 시약 계산.',selectLanguageText:'언어 선택',langEnglish:'English',langSpanish:'Español',langKorean:'한국어'}
       };
 
       const state = {selectedLanguage:'es',selectedTask:'',tankState:{levelMm:0,volumeM3:0,pH:7},chemicals:{naohPct:30,h2so4Pct:98},effluents:[{volumeM3:0,pH:7,kind:'acid'},{volumeM3:0,pH:7,kind:'acid'}],resultingTankState:{},neutralization:{mode:'chemicals',requiredType:'',requiredConcentration:null,referencePh:null,equivalentsToNeutralize:0,reagentEqPerL:0,requiredVolumeL:0,requiredVolumeM3:0,levelIncreaseMm:0,projectedFinalLevelMm:0,species:''},totalEffluentVolumeM3:0,totalLevelIncreaseMm:0,finalLevelMm:0,finalVolumeM3:0,finalPh:7};
@@ -337,10 +400,10 @@
       }
 
       function renderTabs(){ $('tabs').innerHTML = [['language',t('tabLanguage')],['task',t('tabTask')],['state',t('tabState')],['chemicals',t('tabChem')],['results',t('tabRes')]].map(([id,lb])=>`<span class="tab ${currentScreen===id?'active':''}">${lb}</span>`).join(''); }
-      function renderI18n(){ document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n)); document.documentElement.lang = state.selectedLanguage; buildSelects(); renderTabs(); renderResults(); }
+      function renderI18n(){ document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n)); document.documentElement.lang = state.selectedLanguage; buildSelects(); renderTabs(); renderResults(); $('main-title').textContent=t('welcomeTitle'); $('main-description').textContent=t('welcomeDescription'); $('language-label').textContent=t('selectLanguageText'); $('welcomeNextButton').textContent=t('nextBtn'); $('langBtnEn').textContent=t('langEnglish'); $('langBtnEs').textContent=t('langSpanish'); $('langBtnKo').textContent=t('langKorean'); document.querySelectorAll('.language-button').forEach(b=>b.classList.toggle('active', b.dataset.lang===state.selectedLanguage)); }
 
       function setError(msg){ $('screenError').textContent = msg; }
-      function showScreen(id){ currentScreen=id; screens.forEach(s=>$('screen-'+s).classList.toggle('active', s===id)); renderTabs(); $('btnBack').disabled=id==='language'; setError(''); }
+      function showScreen(id){ currentScreen=id; screens.forEach(s=>$('screen-'+s).classList.toggle('active', s===id)); renderTabs(); $('btnBack').disabled=id==='language'; const inWelcome=id==='language'; $('tabs').style.display=inWelcome?'none':'flex'; $('globalNav').style.display=inWelcome?'none':'flex'; setError(''); }
       function isScreenValid(id){
         if (id==='task' && !state.selectedTask) return setError(t('errSelectTask')), false;
         if (id==='state') {
@@ -401,8 +464,9 @@
       }
 
       function bind(){
-        $('languageSelect').addEventListener('change', e=>{ state.selectedLanguage=e.target.value; renderI18n(); });
-        $('taskSelect').addEventListener('change', e=>{ state.selectedTask=e.target.value; renderResults(); });
+        document.querySelectorAll('.language-button').forEach(btn=>btn.addEventListener('click',()=>{ state.selectedLanguage=btn.dataset.lang; renderI18n(); }));
+        $('welcomeNextButton').addEventListener('click',()=>showScreen('task'));
+                $('taskSelect').addEventListener('change', e=>{ state.selectedTask=e.target.value; renderResults(); });
         $('tankLevelMm').addEventListener('input', e=>{ state.tankState.levelMm=Number(e.target.value)||0; if(!$('tankVolumeM3').value) {state.tankState.volumeM3=mmToM3(state.tankState.levelMm); $('tankVolumeM3').value=fmt(state.tankState.volumeM3,3);} renderResults();});
         $('tankVolumeM3').addEventListener('input', e=>{ state.tankState.volumeM3=Number(e.target.value)||0; renderResults();});
         $('tankPh').addEventListener('input', e=>{ state.tankState.pH=Number(e.target.value)||7; renderResults();});
@@ -418,7 +482,6 @@
 
       function init(){
         bind(); renderI18n();
-        $('languageSelect').value='es';
         $('tankLevelMm').value='0'; $('tankVolumeM3').value='0'; $('tankPh').value='7';
         $('eff1Vol').value='0'; $('eff1Ph').value='7'; $('eff2Vol').value='0'; $('eff2Ph').value='7';
         $('eff1Kind').value='acid'; $('eff2Kind').value='acid';
