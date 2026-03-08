@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora pH</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="screen active">
+      <h1>Calculadora de pH</h1>
+      <h2>Estilo visual POSCO</h2>
+
+      <div class="form-group">
+        <label for="material">Materia prima</label>
+        <select id="material">
+          <option>Ácido Fosfórico</option>
+          <option>Agua Residual</option>
+          <option>Personalizado</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="densidad">Densidad (kg/m³)</label>
+        <input id="densidad" type="number" value="1470" />
+      </div>
+
+      <div class="form-group">
+        <label for="taraVacia">Tara vacía (kg)</label>
+        <input id="taraVacia" type="number" placeholder="Ingrese la tara vacía" />
+      </div>
+
+      <button id="calcularBtn" type="button">Calcular</button>
+
+      <div class="result" id="resultado">
+        <h3>Resultado</h3>
+        <p class="result-value" id="salida">Ingrese valores para calcular.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const btn = document.getElementById('calcularBtn');
+    const salida = document.getElementById('salida');
+
+    btn.addEventListener('click', () => {
+      const densidad = Number(document.getElementById('densidad').value);
+      const taraVacia = Number(document.getElementById('taraVacia').value);
+      const taraLlena = 50000;
+
+      if (!densidad || taraVacia < 0 || taraVacia >= taraLlena) {
+        salida.textContent = 'Verifique los datos ingresados.';
+        return;
+      }
+
+      const pesoNeto = taraLlena - taraVacia;
+      const metrosCubicos = Math.round(pesoNeto / densidad);
+      salida.textContent = `${metrosCubicos} m³ (peso neto: ${pesoNeto.toFixed(2)} kg)`;
+    });
+  </script>
+</body>
+</html>
