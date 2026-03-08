@@ -1,769 +1,430 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculadora pH</title>
-  <style>
-    :root {
-      --bg: #f4f6fb;
-      --panel: #ffffff;
-      --text: #17233a;
-      --muted: #5f6b86;
-      --primary: #1f4f99;
-      --primary-soft: #e9f0ff;
-      --danger: #c8352e;
-      --warning: #9a5b00;
-      --border: #d8dfef;
-      --radius: 12px;
-      --shadow: 0 4px 16px rgba(18, 45, 96, 0.08);
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora pH</title>
+    <style>
+      :root {
+        --overlay-color: rgba(255, 255, 255, 0.76);
+        --panel-color: rgba(255, 255, 255, 0.88);
+        --text-primary: #093a63;
+        --text-secondary: #325f83;
+        --button-text: #ffffff;
+        --button-bg: #0d6eaa;
+        --button-bg-hover: #1285cb;
+        --border: rgba(73, 119, 153, 0.25);
+        --danger: #b8302d;
+        --warning: #9b6200;
+      }
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, "Segoe UI", Tahoma, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      line-height: 1.35;
-    }
+      * { box-sizing: border-box; }
 
-    .app {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 16px;
-    }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        color: var(--text-primary);
+        background-color: #e9edf2;
+      }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px;
-    }
+      .app-screen {
+        position: relative;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 7.2rem 1.25rem 1.8rem;
+        overflow: hidden;
+      }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      gap: 12px;
-    }
+      .background-image {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(13, 110, 170, 0.12), transparent 35%),
+          radial-gradient(circle at 80% 40%, rgba(13, 110, 170, 0.08), transparent 38%),
+          linear-gradient(180deg, #f5f7fa 0%, #e8edf3 100%);
+      }
 
-    .title { font-size: 1.2rem; font-weight: 700; }
-    .subtitle { color: var(--muted); font-size: 0.9rem; }
+      .background-logo {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        opacity: 0.12;
+        background-image: url("PoscoArg.png");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: min(72vw, 700px);
+      }
 
-    .tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 8px 0 14px;
-    }
-    .tab {
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 0.86rem;
-      background: #fff;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .tab.active { background: var(--primary-soft); color: var(--primary); border-color: #b8c9ee; }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--overlay-color);
+        z-index: -1;
+      }
 
-    .screen { display: none; }
-    .screen.active { display: block; }
+      .top-logo {
+        position: absolute;
+        top: 1.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(300px, 68vw);
+        filter: drop-shadow(0 5px 10px rgba(5, 43, 72, 0.15));
+      }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .content {
+        width: min(1040px, 100%);
+        background: var(--panel-color);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: clamp(1rem, 2.8vw, 1.8rem);
+        box-shadow: 0 18px 35px rgba(9, 58, 99, 0.12);
+      }
 
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 0.86rem; color: var(--muted); font-weight: 600; }
+      .header h1 {
+        margin: 0;
+        font-size: clamp(1.1rem, 2.4vw, 1.8rem);
+      }
 
-    input, select {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 0.95rem;
-      background: #fff;
-      color: var(--text);
-      width: 100%;
-    }
+      .subtitle {
+        margin-top: 0.4rem;
+        color: var(--text-secondary);
+        font-size: 0.96rem;
+      }
 
-    .btn {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+      .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+      .tab {
+        border: 1px solid rgba(13, 110, 170, 0.25);
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-size: 0.84rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        background: rgba(255,255,255,0.75);
+      }
+      .tab.active {
+        color: var(--button-bg);
+        background: rgba(13, 110, 170, 0.13);
+        border-color: rgba(13, 110, 170, 0.42);
+      }
 
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 16px;
-      border-top: 1px solid var(--border);
-      padding-top: 12px;
-      gap: 8px;
-    }
-    .nav-right { display: flex; gap: 8px; }
+      .screen { display: none; }
+      .screen.active { display: block; }
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 10px;
-    }
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      background: #fff;
-    }
-    .card h4 { margin: 0 0 6px; font-size: 0.94rem; color: var(--primary); }
-    .kpi {
-      margin-top: 8px;
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid #b7c8ee;
-      background: #f0f5ff;
-    }
-    .kpi-label { font-size: 0.84rem; color: var(--muted); }
-    .kpi-value { font-size: 1.7rem; font-weight: 800; color: var(--primary); }
+      h3 { margin: 0 0 10px; font-size: 1.04rem; }
+      .section-gap { margin-top: 16px; }
 
-    .notice { margin-top: 10px; font-size: 0.88rem; color: var(--muted); }
-    .warn { color: var(--warning); font-weight: 700; }
-    .error { color: var(--danger); margin-top: 6px; font-size: 0.85rem; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+      .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .cards { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
 
-    .row-actions { display: flex; gap: 8px; margin-top: 8px; }
+      .field { display: flex; flex-direction: column; gap: 5px; }
+      label { font-size: 0.84rem; color: var(--text-secondary); font-weight: 600; }
 
-    @media (max-width: 860px) {
-      .grid, .grid-3, .cards { grid-template-columns: 1fr; }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <div class="panel">
-      <div class="header">
-        <div>
-          <div class="title" data-i18n="appTitle"></div>
+      input, select {
+        border: 1px solid rgba(73, 119, 153, 0.28);
+        border-radius: 10px;
+        padding: 9px 10px;
+        background: #fff;
+        color: var(--text-primary);
+        width: 100%;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        font-size: 0.96rem;
+        font-weight: 700;
+        color: var(--button-text);
+        background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        box-shadow: 0 8px 16px rgba(9,58,99,.2);
+      }
+      .btn:hover, .btn:focus-visible {
+        transform: translateY(-1px);
+        background: linear-gradient(180deg, #1a92da, #0d6eaa);
+        box-shadow: 0 10px 22px rgba(9,58,99,.28);
+        outline: 2px solid rgba(13,110,170,.35);
+        outline-offset: 1px;
+      }
+      .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+      .nav {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .nav-right { display: flex; gap: 8px; }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(255,255,255,.84);
+        padding: 11px;
+      }
+      .card h4 { margin: 0 0 6px; font-size: .9rem; color: var(--button-bg); }
+
+      .kpi {
+        margin-top: 10px;
+        border: 1px solid rgba(13,110,170,0.35);
+        border-radius: 12px;
+        background: rgba(13,110,170,0.1);
+        padding: 12px;
+      }
+      .kpi-label { font-size: .84rem; color: var(--text-secondary); }
+      .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--button-bg); }
+
+      .notice { margin-top: 8px; font-size: .88rem; color: var(--text-secondary); }
+      .warn { color: var(--warning); font-weight: 700; }
+      .error { margin-top: 6px; font-size: .85rem; color: var(--danger); }
+
+      @media (max-width: 860px) {
+        .grid, .grid-3, .cards { grid-template-columns: 1fr; }
+        .app-screen { padding-top: 6.5rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-screen">
+      <div class="background-image" aria-hidden="true"></div>
+      <div class="background-logo" aria-hidden="true"></div>
+      <div class="overlay" aria-hidden="true"></div>
+      <img class="top-logo" alt="Logo POSCO Argentina" src="PoscoArg.png" />
+
+      <section class="content">
+        <div class="header">
+          <h1 data-i18n="appTitle"></h1>
           <div class="subtitle" data-i18n="appSubtitle"></div>
         </div>
-      </div>
 
-      <div class="tabs" id="tabs"></div>
+        <div class="tabs" id="tabs"></div>
 
-      <section class="screen" id="screen-language">
-        <h3 data-i18n="languageTitle"></h3>
-        <div class="grid">
-          <div class="field">
-            <label data-i18n="languageLabel"></label>
-            <select id="languageSelect">
-              <option value="es">Español</option>
-              <option value="en">English</option>
-              <option value="ko">한국어</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-task">
-        <h3 data-i18n="taskTitle"></h3>
-        <div class="grid">
-          <div class="field">
-            <label data-i18n="taskLabel"></label>
-            <select id="taskSelect"></select>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-state">
-        <h3 data-i18n="tankTitle"></h3>
-        <div class="grid grid-3">
-          <div class="field">
-            <label data-i18n="levelMm"></label>
-            <input id="tankLevelMm" type="number" step="0.01" min="0" />
-          </div>
-          <div class="field">
-            <label data-i18n="volumeM3"></label>
-            <input id="tankVolumeM3" type="number" step="0.01" min="0" />
-          </div>
-          <div class="field">
-            <label data-i18n="phLabel"></label>
-            <input id="tankPh" type="number" step="0.01" min="0" max="14" />
-          </div>
-        </div>
-        <div class="notice" data-i18n="volumeHint"></div>
-
-        <h3 style="margin-top:16px;" data-i18n="effluentsTitle"></h3>
-        <div class="grid grid-3">
-          <div class="field">
-            <label data-i18n="eff1Vol"></label>
-            <input id="eff1Vol" type="number" step="0.01" min="0" />
-          </div>
-          <div class="field">
-            <label data-i18n="eff1Ph"></label>
-            <input id="eff1Ph" type="number" step="0.01" min="0" max="14" />
-          </div>
-          <div class="field">
-            <label data-i18n="eff1Kind"></label>
-            <select id="eff1Kind">
-              <option value="acid" data-i18n="acidic"></option>
-              <option value="base" data-i18n="basic"></option>
-            </select>
-          </div>
-        </div>
-        <div class="grid grid-3" style="margin-top:10px;">
-          <div class="field">
-            <label data-i18n="eff2Vol"></label>
-            <input id="eff2Vol" type="number" step="0.01" min="0" />
-          </div>
-          <div class="field">
-            <label data-i18n="eff2Ph"></label>
-            <input id="eff2Ph" type="number" step="0.01" min="0" max="14" />
-          </div>
-          <div class="field">
-            <label data-i18n="eff2Kind"></label>
-            <select id="eff2Kind">
-              <option value="acid" data-i18n="acidic"></option>
-              <option value="base" data-i18n="basic"></option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-chemicals">
-        <h3 data-i18n="chemicalsTitle"></h3>
-        <div class="grid">
-          <div class="field">
-            <label data-i18n="naohConcentration"></label>
-            <select id="naohPct"></select>
-          </div>
-          <div class="field">
-            <label data-i18n="h2so4Concentration"></label>
-            <select id="h2so4Pct"></select>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-results">
-        <h3 data-i18n="resultsTitle"></h3>
-
-        <div class="cards">
-          <div class="card">
-            <h4 data-i18n="stateCard"></h4>
-            <div id="stateSummary"></div>
-          </div>
-          <div class="card">
-            <h4 data-i18n="methodCard"></h4>
-            <div id="methodSummary"></div>
-          </div>
-          <div class="card">
-            <h4 data-i18n="reagentCard"></h4>
-            <div id="reagentSummary"></div>
-          </div>
-          <div class="card">
-            <h4 data-i18n="calcCard"></h4>
-            <div id="calcSummary"></div>
-          </div>
-        </div>
-
-        <div class="card" id="modeBlock" style="margin-top:10px; display:none;">
-          <h4 data-i18n="neutralizationMode"></h4>
+        <section class="screen" id="screen-language">
+          <h3 data-i18n="languageTitle"></h3>
           <div class="grid">
             <div class="field">
-              <label data-i18n="modeLabel"></label>
-              <select id="modeSelect">
-                <option value="chemicals" data-i18n="modeChemicals"></option>
-                <option value="effluent" data-i18n="modeEffluent"></option>
+              <label data-i18n="languageLabel"></label>
+              <select id="languageSelect">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+                <option value="ko">한국어</option>
               </select>
             </div>
-            <div class="field" id="neutralizerPhField" style="display:none;">
-              <label id="neutralizerPhLabel"></label>
-              <input id="neutralizerPh" type="number" min="0" max="14" step="0.01" />
-              <div id="neutralizerPhError" class="error"></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-task">
+          <h3 data-i18n="taskTitle"></h3>
+          <div class="grid">
+            <div class="field">
+              <label data-i18n="taskLabel"></label>
+              <select id="taskSelect"></select>
             </div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-state">
+          <h3 data-i18n="tankTitle"></h3>
+          <div class="grid grid-3">
+            <div class="field"><label data-i18n="levelMm"></label><input id="tankLevelMm" type="number" min="0" step="0.01" /></div>
+            <div class="field"><label data-i18n="volumeM3"></label><input id="tankVolumeM3" type="number" min="0" step="0.01" /></div>
+            <div class="field"><label data-i18n="phLabel"></label><input id="tankPh" type="number" min="0" max="14" step="0.01" /></div>
+          </div>
+          <div class="notice" data-i18n="volumeHint"></div>
+
+          <h3 class="section-gap" data-i18n="effluentsTitle"></h3>
+          <div class="grid grid-3">
+            <div class="field"><label data-i18n="eff1Vol"></label><input id="eff1Vol" type="number" min="0" step="0.01" /></div>
+            <div class="field"><label data-i18n="eff1Ph"></label><input id="eff1Ph" type="number" min="0" max="14" step="0.01" /></div>
+            <div class="field"><label data-i18n="eff1Kind"></label><select id="eff1Kind"><option value="acid" data-i18n="acidic"></option><option value="base" data-i18n="basic"></option></select></div>
+          </div>
+          <div class="grid grid-3" style="margin-top:10px;">
+            <div class="field"><label data-i18n="eff2Vol"></label><input id="eff2Vol" type="number" min="0" step="0.01" /></div>
+            <div class="field"><label data-i18n="eff2Ph"></label><input id="eff2Ph" type="number" min="0" max="14" step="0.01" /></div>
+            <div class="field"><label data-i18n="eff2Kind"></label><select id="eff2Kind"><option value="acid" data-i18n="acidic"></option><option value="base" data-i18n="basic"></option></select></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-chemicals">
+          <h3 data-i18n="chemicalsTitle"></h3>
+          <div class="grid">
+            <div class="field"><label data-i18n="naohConcentration"></label><select id="naohPct"></select></div>
+            <div class="field"><label data-i18n="h2so4Concentration"></label><select id="h2so4Pct"></select></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-results">
+          <h3 data-i18n="resultsTitle"></h3>
+          <div class="cards">
+            <div class="card"><h4 data-i18n="stateCard"></h4><div id="stateSummary"></div></div>
+            <div class="card"><h4 data-i18n="methodCard"></h4><div id="methodSummary"></div></div>
+            <div class="card"><h4 data-i18n="reagentCard"></h4><div id="reagentSummary"></div></div>
+            <div class="card"><h4 data-i18n="calcCard"></h4><div id="calcSummary"></div></div>
+          </div>
+
+          <div class="card" id="modeBlock" style="display:none; margin-top:10px;">
+            <h4 data-i18n="neutralizationMode"></h4>
+            <div class="grid">
+              <div class="field"><label data-i18n="modeLabel"></label><select id="modeSelect"><option value="chemicals" data-i18n="modeChemicals"></option><option value="effluent" data-i18n="modeEffluent"></option></select></div>
+              <div class="field" id="neutralizerPhField" style="display:none;"><label id="neutralizerPhLabel"></label><input id="neutralizerPh" type="number" min="0" max="14" step="0.01" /><div id="neutralizerPhError" class="error"></div></div>
+            </div>
+          </div>
+
+          <div class="kpi"><div class="kpi-label" data-i18n="requiredAmount"></div><div class="kpi-value" id="requiredKpi">-</div></div>
+          <div class="notice" data-i18n="idealLegend"></div>
+          <div class="notice warn" id="overflowWarn" style="display:none;"></div>
+        </section>
+
+        <div class="nav">
+          <button class="btn" id="btnHome" data-i18n="homeBtn"></button>
+          <div class="nav-right">
+            <button class="btn" id="btnBack" data-i18n="backBtn"></button>
+            <button class="btn" id="btnNext" data-i18n="nextBtn"></button>
           </div>
         </div>
 
-        <div class="kpi">
-          <div class="kpi-label" data-i18n="requiredAmount"></div>
-          <div class="kpi-value" id="requiredKpi">-</div>
-        </div>
-
-        <div class="notice" data-i18n="idealLegend"></div>
-        <div class="notice warn" id="overflowWarn" style="display:none;"></div>
+        <div id="screenError" class="error"></div>
       </section>
+    </main>
 
-      <div class="nav">
-        <button class="btn" id="btnHome" data-i18n="homeBtn"></button>
-        <div class="nav-right">
-          <button class="btn" id="btnBack" data-i18n="backBtn"></button>
-          <button class="btn primary" id="btnNext" data-i18n="nextBtn"></button>
-        </div>
-      </div>
-
-      <div id="screenError" class="error"></div>
-    </div>
-  </div>
-
-  <script>
-    const CAL = {
-      MM_EQ_M3_NUM: 166.66,
-      MM_EQ_M3_DEN: 10,
-      PH_TARGET: 7,
-      TANK_MAX_MM: 166.66,
-      PM_NAOH: 40,
-      PM_H2SO4: 98.079,
-      naohDensity: { 10: 1.11, 20: 1.22, 30: 1.33, 40: 1.43, 50: 1.53 },
-      h2so4Density: { 98: 1.84, 90: 1.80, 80: 1.73, 70: 1.61, 60: 1.50, 50: 1.40, 40: 1.30, 30: 1.22 }
-    };
-    CAL.M3_PER_MM = CAL.MM_EQ_M3_DEN / CAL.MM_EQ_M3_NUM;
-    CAL.MM_PER_M3 = CAL.MM_EQ_M3_NUM / CAL.MM_EQ_M3_DEN;
-
-    const translations = {
-      es: {
-        appTitle: 'Calculadora de Neutralización de pH', appSubtitle: 'Estimación estequiométrica ideal',
-        languageTitle: 'Selección de idioma', languageLabel: 'Idioma',
-        taskTitle: 'Selección de tarea', taskLabel: 'Tarea',
-        tankTitle: 'Estado de la pileta', levelMm: 'Nivel (mm)', volumeM3: 'Volumen (m³)', phLabel: 'pH',
-        volumeHint: 'Referencia fija: 10 m³ = 166.66 mm.',
-        effluentsTitle: 'Efluentes de ingreso', eff1Vol: 'Efluente 1 volumen (m³)', eff1Ph: 'Efluente 1 pH', eff1Kind: 'Efluente 1 tipo',
-        eff2Vol: 'Efluente 2 volumen (m³)', eff2Ph: 'Efluente 2 pH', eff2Kind: 'Efluente 2 tipo',
-        chemicalsTitle: 'Químicos', naohConcentration: 'Concentración NaOH (% p/p)', h2so4Concentration: 'Concentración H2SO4 (% p/p)',
-        resultsTitle: 'Resultados', stateCard: 'Estado actual/final de la pileta', methodCard: 'Método de neutralización', reagentCard: 'Reactivo/Efluente requerido', calcCard: 'Datos técnicos de cálculo',
-        neutralizationMode: 'Modo de neutralización', modeLabel: 'Modo', modeChemicals: 'Químicos', modeEffluent: 'Efluente',
-        requiredAmount: 'Cantidad estimada requerida',
-        idealLegend: 'El cálculo corresponde a una estimación estequiométrica ideal y no contempla alcalinidad, buffers ni reacciones secundarias.',
-        homeBtn: 'Inicio', backBtn: 'Volver', nextBtn: 'Siguiente',
-        tabLanguage: 'Idioma', tabTask: 'Tarea', tabState: 'Estado/Efluentes', tabChem: 'Químicos', tabRes: 'Resultados',
-        taskReception: 'Recepción de Efluentes', taskConditioning: 'Acondicionamiento de la pileta',
-        acidic: 'Ácido', basic: 'Básico',
-        errSelectTask: 'Seleccione una tarea.', errTank: 'Complete estado de pileta válido (nivel/volumen/pH).', errPh: 'El pH debe estar entre 0 y 14.',
-        nearNeutral: 'pH cercano a 7: ajuste mínimo o no requerido.',
-        species: 'Especie neutralizada', eqNeutralize: 'Equivalentes a neutralizar', methodCalc: 'Método',
-        overflow: 'Advertencia: el nivel proyectado supera la altura máxima de la pileta.',
-        neutralizerPhLH: 'pH del efluente LH (base)', neutralizerPhIX: 'pH del efluente IX (ácido)',
-        invalidNeutralizerPh: 'Ingrese pH válido entre 0 y 14.',
-        stoichMethodText: 'Estequiometría ideal con pH objetivo',
-        typeLabel: 'Tipo', concentrationLabel: 'Concentración', referencePhLabel: 'pH referencia', volumeLabel: 'Volumen', levelDeltaLabel: 'Δ nivel', projectedLevelLabel: 'Nivel proyectado'
-      },
-      en: {
-        appTitle: 'pH Neutralization Calculator', appSubtitle: 'Ideal stoichiometric estimation',
-        languageTitle: 'Language selection', languageLabel: 'Language',
-        taskTitle: 'Task selection', taskLabel: 'Task',
-        tankTitle: 'Tank state', levelMm: 'Level (mm)', volumeM3: 'Volume (m³)', phLabel: 'pH',
-        volumeHint: 'Fixed reference: 10 m³ = 166.66 mm.',
-        effluentsTitle: 'Incoming effluents', eff1Vol: 'Effluent 1 volume (m³)', eff1Ph: 'Effluent 1 pH', eff1Kind: 'Effluent 1 type',
-        eff2Vol: 'Effluent 2 volume (m³)', eff2Ph: 'Effluent 2 pH', eff2Kind: 'Effluent 2 type',
-        chemicalsTitle: 'Chemicals', naohConcentration: 'NaOH concentration (% w/w)', h2so4Concentration: 'H2SO4 concentration (% w/w)',
-        resultsTitle: 'Results', stateCard: 'Current/final tank state', methodCard: 'Neutralization mode', reagentCard: 'Required reagent/effluent', calcCard: 'Technical calculation data',
-        neutralizationMode: 'Neutralization mode', modeLabel: 'Mode', modeChemicals: 'Chemicals', modeEffluent: 'Effluent',
-        requiredAmount: 'Estimated required amount',
-        idealLegend: 'This is an ideal stoichiometric estimate and does not account for alkalinity, buffers, or side reactions.',
-        homeBtn: 'Home', backBtn: 'Back', nextBtn: 'Next',
-        tabLanguage: 'Language', tabTask: 'Task', tabState: 'State/Effluents', tabChem: 'Chemicals', tabRes: 'Results',
-        taskReception: 'Effluent Reception', taskConditioning: 'Tank Conditioning',
-        acidic: 'Acidic', basic: 'Basic',
-        errSelectTask: 'Please select a task.', errTank: 'Provide valid tank state (level/volume/pH).', errPh: 'pH must be between 0 and 14.',
-        nearNeutral: 'pH close to 7: minimal or no adjustment required.',
-        species: 'Neutralized species', eqNeutralize: 'Estimated equivalents', methodCalc: 'Method',
-        overflow: 'Warning: projected level exceeds tank maximum height.',
-        neutralizerPhLH: 'LH effluent pH (base)', neutralizerPhIX: 'IX effluent pH (acid)',
-        invalidNeutralizerPh: 'Enter a valid pH between 0 and 14.',
-        stoichMethodText: 'Ideal stoichiometry with target pH',
-        typeLabel: 'Type', concentrationLabel: 'Concentration', referencePhLabel: 'Reference pH', volumeLabel: 'Volume', levelDeltaLabel: 'Level Δ', projectedLevelLabel: 'Projected level'
-      },
-      ko: {
-        appTitle: 'pH 중화 계산기', appSubtitle: '이상적인 화학양론 추정',
-        languageTitle: '언어 선택', languageLabel: '언어',
-        taskTitle: '작업 선택', taskLabel: '작업',
-        tankTitle: '탱크 상태', levelMm: '수위 (mm)', volumeM3: '부피 (m³)', phLabel: 'pH',
-        volumeHint: '고정 기준: 10 m³ = 166.66 mm.',
-        effluentsTitle: '유입 폐수', eff1Vol: '폐수 1 부피 (m³)', eff1Ph: '폐수 1 pH', eff1Kind: '폐수 1 유형',
-        eff2Vol: '폐수 2 부피 (m³)', eff2Ph: '폐수 2 pH', eff2Kind: '폐수 2 유형',
-        chemicalsTitle: '약품', naohConcentration: 'NaOH 농도 (% w/w)', h2so4Concentration: 'H2SO4 농도 (% w/w)',
-        resultsTitle: '결과', stateCard: '현재/최종 탱크 상태', methodCard: '중화 방식', reagentCard: '필요 시약/폐수', calcCard: '기술 계산 데이터',
-        neutralizationMode: '중화 모드', modeLabel: '모드', modeChemicals: '약품', modeEffluent: '폐수',
-        requiredAmount: '예상 필요량',
-        idealLegend: '본 계산은 이상적인 화학양론 추정이며 알칼리도, 완충, 부반응을 고려하지 않습니다.',
-        homeBtn: '홈', backBtn: '뒤로', nextBtn: '다음',
-        tabLanguage: '언어', tabTask: '작업', tabState: '상태/폐수', tabChem: '약품', tabRes: '결과',
-        taskReception: '폐수 수령', taskConditioning: '탱크 컨디셔닝',
-        acidic: '산성', basic: '염기성',
-        errSelectTask: '작업을 선택하세요.', errTank: '유효한 탱크 상태(수위/부피/pH)를 입력하세요.', errPh: 'pH는 0~14 범위여야 합니다.',
-        nearNeutral: 'pH가 7에 가까워 조정이 거의 필요하지 않습니다.',
-        species: '중화 대상 종', eqNeutralize: '중화 등가량', methodCalc: '방법',
-        overflow: '경고: 예상 수위가 탱크 최대 높이를 초과합니다.',
-        neutralizerPhLH: 'LH 폐수 pH (염기)', neutralizerPhIX: 'IX 폐수 pH (산)',
-        invalidNeutralizerPh: '0~14 사이의 유효한 pH를 입력하세요.',
-        stoichMethodText: '목표 pH 기반 이상 화학양론',
-        typeLabel: '유형', concentrationLabel: '농도', referencePhLabel: '기준 pH', volumeLabel: '부피', levelDeltaLabel: '수위 Δ', projectedLevelLabel: '예상 수위'
-      }
-    };
-
-    const state = {
-      selectedLanguage: 'es',
-      selectedTask: '',
-      tankState: { levelMm: 0, volumeM3: 0, pH: 7 },
-      chemicals: { naohPct: 30, h2so4Pct: 98 },
-      effluents: [
-        { volumeM3: 0, pH: 7, kind: 'acid' },
-        { volumeM3: 0, pH: 7, kind: 'acid' }
-      ],
-      resultingTankState: {},
-      neutralization: {
-        mode: 'chemicals', requiredType: '', requiredConcentration: null, referencePh: null,
-        equivalentsToNeutralize: 0, reagentEqPerL: 0, requiredVolumeL: 0, requiredVolumeM3: 0,
-        levelIncreaseMm: 0, projectedFinalLevelMm: 0
-      },
-      totalEffluentVolumeM3: 0,
-      totalLevelIncreaseMm: 0,
-      finalLevelMm: 0,
-      finalVolumeM3: 0,
-      finalPh: 7
-    };
-
-    const screens = ['language','task','state','chemicals','results'];
-    let currentScreen = 'language';
-
-    const $ = (id) => document.getElementById(id);
-    const t = (k) => translations[state.selectedLanguage][k] ?? k;
-    const fmt = (v, n = 3) => Number(v).toFixed(n);
-    const clampPh = (p) => Math.min(14, Math.max(0, Number(p) || 0));
-
-    function mmToM3(mm){ return (Number(mm) || 0) * CAL.M3_PER_MM; }
-    function m3ToMm(m3){ return (Number(m3) || 0) * CAL.MM_PER_M3; }
-    function m3ToL(m3){ return (Number(m3) || 0) * 1000; }
-
-    function hFromPh(ph){ return Math.pow(10, -clampPh(ph)); }
-    function ohFromPh(ph){ return Math.pow(10, -(14 - clampPh(ph))); }
-
-    function naohEqPerL(pct){
-      const d = CAL.naohDensity[pct] || CAL.naohDensity[30];
-      const frac = pct / 100;
-      return (d * frac * 1000) / CAL.PM_NAOH;
-    }
-    function h2so4EqPerL(pct){
-      const d = CAL.h2so4Density[pct] || CAL.h2so4Density[98];
-      const frac = pct / 100;
-      return ((d * frac * 1000) / CAL.PM_H2SO4) * 2;
-    }
-
-    function buildSelects(){
-      const taskSelect = $('taskSelect');
-      taskSelect.innerHTML = `<option value="">--</option>
-        <option value="Recepción de Efluentes">${t('taskReception')}</option>
-        <option value="Acondicionamiento de la pileta">${t('taskConditioning')}</option>`;
-
-      const naoh = $('naohPct');
-      naoh.innerHTML = [10,20,30,40,50].map(v=>`<option value="${v}">${v}%</option>`).join('');
-      naoh.value = state.chemicals.naohPct;
-
-      const h2so4 = $('h2so4Pct');
-      h2so4.innerHTML = [98,90,80,70,60,50,40,30].map(v=>`<option value="${v}">${v}%</option>`).join('');
-      h2so4.value = state.chemicals.h2so4Pct;
-
-      if (state.selectedTask) taskSelect.value = state.selectedTask;
-    }
-
-    function renderTabs(){
-      const tabs = $('tabs');
-      tabs.innerHTML = [
-        ['language', t('tabLanguage')],['task', t('tabTask')],['state', t('tabState')],['chemicals', t('tabChem')],['results', t('tabRes')]
-      ].map(([id,label]) => `<span class="tab ${currentScreen===id?'active':''}">${label}</span>`).join('');
-    }
-
-    function renderI18n(){
-      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-      document.documentElement.lang = state.selectedLanguage;
-      buildSelects();
-      renderTabs();
-      renderResults();
-    }
-
-    function showScreen(id){
-      currentScreen = id;
-      screens.forEach(s => $('screen-'+s).classList.toggle('active', s===id));
-      renderTabs();
-      $('btnBack').disabled = id === 'language';
-      $('btnNext').textContent = id === 'results' ? t('nextBtn') : t('nextBtn');
-      $('screenError').textContent = '';
-    }
-
-    function previousScreen(){
-      const idx = screens.indexOf(currentScreen);
-      if (idx > 0) showScreen(screens[idx-1]);
-    }
-    function nextScreen(){
-      const idx = screens.indexOf(currentScreen);
-      if (!isScreenValid(currentScreen)) return;
-      if (idx < screens.length-1) {
-        showScreen(screens[idx+1]);
-        if (screens[idx+1] === 'results') renderResults();
-      }
-    }
-
-    function setError(msg){ $('screenError').textContent = msg; }
-
-    function isValidPh(ph){ return Number.isFinite(Number(ph)) && Number(ph) >= 0 && Number(ph) <= 14; }
-
-    function isScreenValid(id){
-      if (id === 'task' && !state.selectedTask) { setError(t('errSelectTask')); return false; }
-      if (id === 'state') {
-        const { levelMm, volumeM3, pH } = state.tankState;
-        if (!(levelMm >= 0 && volumeM3 >= 0 && isValidPh(pH))) { setError(t('errTank')); return false; }
-        for (const ef of state.effluents) {
-          if (!(ef.volumeM3 >= 0 && isValidPh(ef.pH))) { setError(t('errPh')); return false; }
-        }
-      }
-      if (id === 'results' && state.neutralization.mode === 'effluent') {
-        if (!isValidPh(state.neutralization.referencePh)) {
-          setError(t('invalidNeutralizerPh'));
-          return false;
-        }
-      }
-      setError('');
-      return true;
-    }
-
-    function computeMixedState(){
-      const tankL = m3ToL(state.tankState.volumeM3);
-      const phTank = state.tankState.pH;
-      let totalH = phTank < 7 ? hFromPh(phTank) * tankL : 0;
-      let totalOH = phTank > 7 ? ohFromPh(phTank) * tankL : 0;
-      let totalM3 = Number(state.tankState.volumeM3) || 0;
-
-      state.effluents.forEach(ef => {
-        const volL = m3ToL(ef.volumeM3);
-        totalM3 += Number(ef.volumeM3) || 0;
-        if (ef.kind === 'acid') totalH += hFromPh(ef.pH) * volL;
-        else totalOH += ohFromPh(ef.pH) * volL;
-      });
-
-      const totalL = m3ToL(totalM3);
-      let finalPh = 7;
-      if (totalL <= 0) finalPh = 7;
-      else if (totalH > totalOH) {
-        const h = (totalH - totalOH) / totalL;
-        finalPh = -Math.log10(Math.max(h, 1e-14));
-      } else if (totalOH > totalH) {
-        const oh = (totalOH - totalH) / totalL;
-        finalPh = 14 + Math.log10(Math.max(oh, 1e-14));
-      }
-
-      const finalLevelMm = state.tankState.levelMm + m3ToMm(totalM3 - state.tankState.volumeM3);
-      return {
-        finalVolumeM3: totalM3,
-        finalLevelMm,
-        finalPh: Math.min(14, Math.max(0, finalPh)),
-        totalEffluentVolumeM3: Math.max(0, totalM3 - state.tankState.volumeM3)
+    <script>
+      const CAL = {
+        MM_EQ_M3_NUM: 166.66, MM_EQ_M3_DEN: 10, PH_TARGET: 7, TANK_MAX_MM: 166.66,
+        PM_NAOH: 40, PM_H2SO4: 98.079,
+        naohDensity: { 10: 1.11, 20: 1.22, 30: 1.33, 40: 1.43, 50: 1.53 },
+        h2so4Density: { 98: 1.84, 90: 1.8, 80: 1.73, 70: 1.61, 60: 1.5, 50: 1.4, 40: 1.3, 30: 1.22 }
       };
-    }
+      CAL.M3_PER_MM = CAL.MM_EQ_M3_DEN / CAL.MM_EQ_M3_NUM;
+      CAL.MM_PER_M3 = CAL.MM_EQ_M3_NUM / CAL.MM_EQ_M3_DEN;
 
-    function calculateNeutralization(){
-      const task = state.selectedTask;
-      const targetPh = CAL.PH_TARGET;
-      let source = { volumeM3: state.tankState.volumeM3, levelMm: state.tankState.levelMm, pH: state.tankState.pH };
-
-      if (task === 'Recepción de Efluentes') {
-        const mix = computeMixedState();
-        state.totalEffluentVolumeM3 = mix.totalEffluentVolumeM3;
-        state.totalLevelIncreaseMm = m3ToMm(mix.totalEffluentVolumeM3);
-        state.finalLevelMm = mix.finalLevelMm;
-        state.finalVolumeM3 = mix.finalVolumeM3;
-        state.finalPh = mix.finalPh;
-        source = { volumeM3: mix.finalVolumeM3, levelMm: mix.finalLevelMm, pH: mix.finalPh };
-      } else {
-        state.finalLevelMm = state.tankState.levelMm;
-        state.finalVolumeM3 = state.tankState.volumeM3;
-        state.finalPh = state.tankState.pH;
-      }
-
-      const delta = source.pH - targetPh;
-      const sourceL = m3ToL(source.volumeM3);
-      let equivalents = 0;
-      let species = '';
-      let requiredType = '';
-      let reagentEqPerL = 0;
-      let requiredConcentration = null;
-      let referencePh = null;
-      const mode = task === 'Acondicionamiento de la pileta' ? 'chemicals' : state.neutralization.mode;
-
-      if (Math.abs(delta) < 0.15) {
-        equivalents = 0;
-      } else if (source.pH < targetPh) {
-        equivalents = hFromPh(source.pH) * sourceL;
-        species = 'H+';
-        if (mode === 'effluent' && task === 'Recepción de Efluentes') {
-          requiredType = 'LH';
-          referencePh = isValidPh(state.neutralization.referencePh) ? Number(state.neutralization.referencePh) : 12.5;
-          reagentEqPerL = ohFromPh(referencePh);
-        } else {
-          requiredType = 'NaOH';
-          requiredConcentration = Number(state.chemicals.naohPct);
-          reagentEqPerL = naohEqPerL(requiredConcentration);
-        }
-      } else {
-        equivalents = ohFromPh(source.pH) * sourceL;
-        species = 'OH-';
-        if (mode === 'effluent' && task === 'Recepción de Efluentes') {
-          requiredType = 'IX';
-          referencePh = isValidPh(state.neutralization.referencePh) ? Number(state.neutralization.referencePh) : 1.5;
-          reagentEqPerL = hFromPh(referencePh);
-        } else {
-          requiredType = 'H2SO4';
-          requiredConcentration = Number(state.chemicals.h2so4Pct);
-          reagentEqPerL = h2so4EqPerL(requiredConcentration);
-        }
-      }
-
-      const requiredVolumeL = reagentEqPerL > 0 ? (equivalents / reagentEqPerL) : 0;
-      const requiredVolumeM3 = requiredVolumeL / 1000;
-      const levelIncreaseMm = m3ToMm(requiredVolumeM3);
-      const projectedFinalLevelMm = source.levelMm + levelIncreaseMm;
-
-      state.resultingTankState = source;
-      state.neutralization = {
-        mode,
-        requiredType,
-        requiredConcentration,
-        referencePh,
-        equivalentsToNeutralize: equivalents,
-        reagentEqPerL,
-        requiredVolumeL,
-        requiredVolumeM3,
-        levelIncreaseMm,
-        projectedFinalLevelMm,
-        species
+      const tr = {
+        es: {appTitle:'Calculadora de Neutralización de pH',appSubtitle:'Estimación estequiométrica ideal',languageTitle:'Selección de idioma',languageLabel:'Idioma',taskTitle:'Selección de tarea',taskLabel:'Tarea',tankTitle:'Estado de la pileta',levelMm:'Nivel (mm)',volumeM3:'Volumen (m³)',phLabel:'pH',volumeHint:'Referencia fija: 10 m³ = 166.66 mm.',effluentsTitle:'Efluentes de ingreso',eff1Vol:'Efluente 1 volumen (m³)',eff1Ph:'Efluente 1 pH',eff1Kind:'Efluente 1 tipo',eff2Vol:'Efluente 2 volumen (m³)',eff2Ph:'Efluente 2 pH',eff2Kind:'Efluente 2 tipo',chemicalsTitle:'Químicos',naohConcentration:'Concentración NaOH (% p/p)',h2so4Concentration:'Concentración H2SO4 (% p/p)',resultsTitle:'Resultados',stateCard:'Estado actual/final de la pileta',methodCard:'Método de neutralización',reagentCard:'Reactivo/Efluente requerido',calcCard:'Datos técnicos de cálculo',neutralizationMode:'Modo de neutralización',modeLabel:'Modo',modeChemicals:'Químicos',modeEffluent:'Efluente',requiredAmount:'Cantidad estimada requerida',idealLegend:'El cálculo corresponde a una estimación estequiométrica ideal y no contempla alcalinidad, buffers ni reacciones secundarias.',homeBtn:'Inicio',backBtn:'Volver',nextBtn:'Siguiente',tabLanguage:'Idioma',tabTask:'Tarea',tabState:'Estado/Efluentes',tabChem:'Químicos',tabRes:'Resultados',taskReception:'Recepción de Efluentes',taskConditioning:'Acondicionamiento de la pileta',acidic:'Ácido',basic:'Básico',errSelectTask:'Seleccione una tarea.',errTank:'Complete estado de pileta válido (nivel/volumen/pH).',errPh:'El pH debe estar entre 0 y 14.',nearNeutral:'pH cercano a 7: ajuste mínimo o no requerido.',species:'Especie neutralizada',eqNeutralize:'Equivalentes a neutralizar',methodCalc:'Método',overflow:'Advertencia: el nivel proyectado supera la altura máxima de la pileta.',neutralizerPhLH:'pH del efluente LH (base)',neutralizerPhIX:'pH del efluente IX (ácido)',invalidNeutralizerPh:'Ingrese pH válido entre 0 y 14.',stoichMethodText:'Estequiometría ideal con pH objetivo',typeLabel:'Tipo',concentrationLabel:'Concentración',referencePhLabel:'pH referencia',volumeLabel:'Volumen',levelDeltaLabel:'Δ nivel',projectedLevelLabel:'Nivel proyectado'},
+        en: {appTitle:'pH Neutralization Calculator',appSubtitle:'Ideal stoichiometric estimation',languageTitle:'Language selection',languageLabel:'Language',taskTitle:'Task selection',taskLabel:'Task',tankTitle:'Tank state',levelMm:'Level (mm)',volumeM3:'Volume (m³)',phLabel:'pH',volumeHint:'Fixed reference: 10 m³ = 166.66 mm.',effluentsTitle:'Incoming effluents',eff1Vol:'Effluent 1 volume (m³)',eff1Ph:'Effluent 1 pH',eff1Kind:'Effluent 1 type',eff2Vol:'Effluent 2 volume (m³)',eff2Ph:'Effluent 2 pH',eff2Kind:'Effluent 2 type',chemicalsTitle:'Chemicals',naohConcentration:'NaOH concentration (% w/w)',h2so4Concentration:'H2SO4 concentration (% w/w)',resultsTitle:'Results',stateCard:'Current/final tank state',methodCard:'Neutralization mode',reagentCard:'Required reagent/effluent',calcCard:'Technical calculation data',neutralizationMode:'Neutralization mode',modeLabel:'Mode',modeChemicals:'Chemicals',modeEffluent:'Effluent',requiredAmount:'Estimated required amount',idealLegend:'This is an ideal stoichiometric estimate and does not account for alkalinity, buffers, or side reactions.',homeBtn:'Home',backBtn:'Back',nextBtn:'Next',tabLanguage:'Language',tabTask:'Task',tabState:'State/Effluents',tabChem:'Chemicals',tabRes:'Results',taskReception:'Effluent Reception',taskConditioning:'Tank Conditioning',acidic:'Acidic',basic:'Basic',errSelectTask:'Please select a task.',errTank:'Provide valid tank state (level/volume/pH).',errPh:'pH must be between 0 and 14.',nearNeutral:'pH close to 7: minimal or no adjustment required.',species:'Neutralized species',eqNeutralize:'Estimated equivalents',methodCalc:'Method',overflow:'Warning: projected level exceeds tank maximum height.',neutralizerPhLH:'LH effluent pH (base)',neutralizerPhIX:'IX effluent pH (acid)',invalidNeutralizerPh:'Enter a valid pH between 0 and 14.',stoichMethodText:'Ideal stoichiometry with target pH',typeLabel:'Type',concentrationLabel:'Concentration',referencePhLabel:'Reference pH',volumeLabel:'Volume',levelDeltaLabel:'Level Δ',projectedLevelLabel:'Projected level'},
+        ko: {appTitle:'pH 중화 계산기',appSubtitle:'이상적인 화학양론 추정',languageTitle:'언어 선택',languageLabel:'언어',taskTitle:'작업 선택',taskLabel:'작업',tankTitle:'탱크 상태',levelMm:'수위 (mm)',volumeM3:'부피 (m³)',phLabel:'pH',volumeHint:'고정 기준: 10 m³ = 166.66 mm.',effluentsTitle:'유입 폐수',eff1Vol:'폐수 1 부피 (m³)',eff1Ph:'폐수 1 pH',eff1Kind:'폐수 1 유형',eff2Vol:'폐수 2 부피 (m³)',eff2Ph:'폐수 2 pH',eff2Kind:'폐수 2 유형',chemicalsTitle:'약품',naohConcentration:'NaOH 농도 (% w/w)',h2so4Concentration:'H2SO4 농도 (% w/w)',resultsTitle:'결과',stateCard:'현재/최종 탱크 상태',methodCard:'중화 방식',reagentCard:'필요 시약/폐수',calcCard:'기술 계산 데이터',neutralizationMode:'중화 모드',modeLabel:'모드',modeChemicals:'약품',modeEffluent:'폐수',requiredAmount:'예상 필요량',idealLegend:'본 계산은 이상적인 화학양론 추정이며 알칼리도, 완충, 부반응을 고려하지 않습니다.',homeBtn:'홈',backBtn:'뒤로',nextBtn:'다음',tabLanguage:'언어',tabTask:'작업',tabState:'상태/폐수',tabChem:'약품',tabRes:'결과',taskReception:'폐수 수령',taskConditioning:'탱크 컨디셔닝',acidic:'산성',basic:'염기성',errSelectTask:'작업을 선택하세요.',errTank:'유효한 탱크 상태(수위/부피/pH)를 입력하세요.',errPh:'pH는 0~14 범위여야 합니다.',nearNeutral:'pH가 7에 가까워 조정이 거의 필요하지 않습니다.',species:'중화 대상 종',eqNeutralize:'중화 등가량',methodCalc:'방법',overflow:'경고: 예상 수위가 탱크 최대 높이를 초과합니다.',neutralizerPhLH:'LH 폐수 pH (염기)',neutralizerPhIX:'IX 폐수 pH (산)',invalidNeutralizerPh:'0~14 사이의 유효한 pH를 입력하세요.',stoichMethodText:'목표 pH 기반 이상 화학양론',typeLabel:'유형',concentrationLabel:'농도',referencePhLabel:'기준 pH',volumeLabel:'부피',levelDeltaLabel:'수위 Δ',projectedLevelLabel:'예상 수위'}
       };
-    }
 
-    function renderResults(){
-      calculateNeutralization();
-      const task = state.selectedTask;
-      const n = state.neutralization;
-      const rs = state.resultingTankState;
+      const state = {selectedLanguage:'es',selectedTask:'',tankState:{levelMm:0,volumeM3:0,pH:7},chemicals:{naohPct:30,h2so4Pct:98},effluents:[{volumeM3:0,pH:7,kind:'acid'},{volumeM3:0,pH:7,kind:'acid'}],resultingTankState:{},neutralization:{mode:'chemicals',requiredType:'',requiredConcentration:null,referencePh:null,equivalentsToNeutralize:0,reagentEqPerL:0,requiredVolumeL:0,requiredVolumeM3:0,levelIncreaseMm:0,projectedFinalLevelMm:0,species:''},totalEffluentVolumeM3:0,totalLevelIncreaseMm:0,finalLevelMm:0,finalVolumeM3:0,finalPh:7};
 
-      $('modeBlock').style.display = task === 'Recepción de Efluentes' ? 'block' : 'none';
-      $('modeSelect').value = n.mode;
+      const screens = ['language','task','state','chemicals','results'];
+      let currentScreen = 'language';
+      const $ = id => document.getElementById(id);
+      const t = key => tr[state.selectedLanguage][key] ?? key;
+      const fmt = (v,n=3)=> Number(v).toFixed(n);
+      const clampPh = p => Math.min(14, Math.max(0, Number(p)||0));
+      const m3ToL = m3 => (Number(m3)||0)*1000;
+      const m3ToMm = m3 => (Number(m3)||0)*CAL.MM_PER_M3;
+      const mmToM3 = mm => (Number(mm)||0)*CAL.M3_PER_MM;
+      const hFromPh = ph => Math.pow(10,-clampPh(ph));
+      const ohFromPh = ph => Math.pow(10,-(14-clampPh(ph)));
+      const isValidPh = ph => Number.isFinite(Number(ph)) && Number(ph)>=0 && Number(ph)<=14;
+      const naohEqPerL = pct => ((CAL.naohDensity[pct]||CAL.naohDensity[30])*(pct/100)*1000)/CAL.PM_NAOH;
+      const h2so4EqPerL = pct => (((CAL.h2so4Density[pct]||CAL.h2so4Density[98])*(pct/100)*1000)/CAL.PM_H2SO4)*2;
 
-      const showNeutralPh = task === 'Recepción de Efluentes' && n.mode === 'effluent' && (n.requiredType === 'LH' || n.requiredType === 'IX');
-      $('neutralizerPhField').style.display = showNeutralPh ? 'block' : 'none';
-      if (showNeutralPh) {
-        $('neutralizerPhLabel').textContent = n.requiredType === 'LH' ? t('neutralizerPhLH') : t('neutralizerPhIX');
-        const defaultPh = n.requiredType === 'LH' ? 12.5 : 1.5;
-        $('neutralizerPh').value = isValidPh(n.referencePh) ? n.referencePh : defaultPh;
+      function buildSelects(){
+        $('taskSelect').innerHTML = `<option value="">--</option><option value="Recepción de Efluentes">${t('taskReception')}</option><option value="Acondicionamiento de la pileta">${t('taskConditioning')}</option>`;
+        if (state.selectedTask) $('taskSelect').value = state.selectedTask;
+        $('naohPct').innerHTML = [10,20,30,40,50].map(v=>`<option value="${v}">${v}%</option>`).join('');
+        $('h2so4Pct').innerHTML = [98,90,80,70,60,50,40,30].map(v=>`<option value="${v}">${v}%</option>`).join('');
+        $('naohPct').value = state.chemicals.naohPct;
+        $('h2so4Pct').value = state.chemicals.h2so4Pct;
       }
 
-      if (task === 'Recepción de Efluentes') {
-        $('stateSummary').innerHTML = `
-          <div>${t('levelMm')}: <b>${fmt(state.finalLevelMm,2)}</b></div>
-          <div>${t('volumeM3')}: <b>${fmt(state.finalVolumeM3,3)}</b></div>
-          <div>${t('phLabel')}: <b>${fmt(state.finalPh,2)}</b></div>
-        `;
-      } else {
-        $('stateSummary').innerHTML = `
-          <div>${t('levelMm')}: <b>${fmt(state.tankState.levelMm,2)}</b></div>
-          <div>${t('volumeM3')}: <b>${fmt(state.tankState.volumeM3,3)}</b></div>
-          <div>${t('phLabel')}: <b>${fmt(state.tankState.pH,2)}</b></div>
-        `;
-      }
+      function renderTabs(){ $('tabs').innerHTML = [['language',t('tabLanguage')],['task',t('tabTask')],['state',t('tabState')],['chemicals',t('tabChem')],['results',t('tabRes')].map(([id,lb])=>`<span class="tab ${currentScreen===id?'active':''}">${lb}</span>`).join(''); }
+      function renderI18n(){ document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n)); document.documentElement.lang = state.selectedLanguage; buildSelects(); renderTabs(); renderResults(); }
 
-      $('methodSummary').innerHTML = `
-        <div>${t('modeLabel')}: <b>${n.mode === 'effluent' ? t('modeEffluent') : t('modeChemicals')}</b></div>
-        <div>${t('methodCalc')}: <b>${t('stoichMethodText')} ${CAL.PH_TARGET}</b></div>
-      `;
-
-      const concentrationText = n.requiredConcentration ? `${n.requiredConcentration}%` : '-';
-      const refPhText = n.referencePh !== null ? fmt(n.referencePh,2) : '-';
-
-      $('reagentSummary').innerHTML = `
-        <div>${t('typeLabel')}: <b>${n.requiredType || '-'}</b></div>
-        <div>${t('concentrationLabel')}: <b>${concentrationText}</b></div>
-        <div>${t('referencePhLabel')}: <b>${refPhText}</b></div>
-        <div>Eq/L: <b>${fmt(n.reagentEqPerL,6)}</b></div>
-      `;
-
-      const nearNeutralMsg = n.equivalentsToNeutralize === 0 ? `<div class="warn">${t('nearNeutral')}</div>` : '';
-      $('calcSummary').innerHTML = `
-        <div>${t('species')}: <b>${n.species || '-'}</b></div>
-        <div>${t('eqNeutralize')}: <b>${fmt(n.equivalentsToNeutralize,6)} eq</b></div>
-        <div>${t('volumeLabel')}: <b>${fmt(n.requiredVolumeL,2)} L (${fmt(n.requiredVolumeM3,4)} m³)</b></div>
-        <div>${t('levelDeltaLabel')}: <b>${fmt(n.levelIncreaseMm,3)} mm</b></div>
-        <div>${t('projectedLevelLabel')}: <b>${fmt(n.projectedFinalLevelMm,3)} mm</b></div>
-        ${nearNeutralMsg}
-      `;
-
-      $('requiredKpi').textContent = `${fmt(n.requiredVolumeL,2)} L`;
-      const over = n.projectedFinalLevelMm > CAL.TANK_MAX_MM;
-      $('overflowWarn').style.display = over ? 'block' : 'none';
-      $('overflowWarn').textContent = over ? t('overflow') : '';
-    }
-
-    function bind(){
-      $('languageSelect').addEventListener('change', (e) => {
-        state.selectedLanguage = e.target.value;
-        renderI18n();
-      });
-      $('taskSelect').addEventListener('change', (e) => { state.selectedTask = e.target.value; renderResults(); });
-
-      $('tankLevelMm').addEventListener('input', (e)=> { state.tankState.levelMm = Number(e.target.value)||0; if(!$('tankVolumeM3').value) { state.tankState.volumeM3 = mmToM3(state.tankState.levelMm); $('tankVolumeM3').value = fmt(state.tankState.volumeM3,3);} renderResults(); });
-      $('tankVolumeM3').addEventListener('input', (e)=> { state.tankState.volumeM3 = Number(e.target.value)||0; renderResults(); });
-      $('tankPh').addEventListener('input', (e)=> { state.tankState.pH = Number(e.target.value)||7; renderResults(); });
-
-      ['1','2'].forEach(i => {
-        $('eff'+i+'Vol').addEventListener('input', (e)=> { state.effluents[i-1].volumeM3 = Number(e.target.value)||0; renderResults(); });
-        $('eff'+i+'Ph').addEventListener('input', (e)=> { state.effluents[i-1].pH = Number(e.target.value)||7; renderResults(); });
-        $('eff'+i+'Kind').addEventListener('change', (e)=> { state.effluents[i-1].kind = e.target.value; renderResults(); });
-      });
-
-      $('naohPct').addEventListener('change', (e)=> { state.chemicals.naohPct = Number(e.target.value); renderResults(); });
-      $('h2so4Pct').addEventListener('change', (e)=> { state.chemicals.h2so4Pct = Number(e.target.value); renderResults(); });
-
-      $('modeSelect').addEventListener('change', (e)=> {
-        state.neutralization.mode = e.target.value;
-        if (e.target.value === 'effluent') {
-          state.neutralization.referencePh = state.finalPh < 7 ? 12.5 : 1.5;
+      function setError(msg){ $('screenError').textContent = msg; }
+      function showScreen(id){ currentScreen=id; screens.forEach(s=>$('screen-'+s).classList.toggle('active', s===id)); renderTabs(); $('btnBack').disabled=id==='language'; setError(''); }
+      function isScreenValid(id){
+        if (id==='task' && !state.selectedTask) return setError(t('errSelectTask')), false;
+        if (id==='state') {
+          const {levelMm, volumeM3, pH} = state.tankState;
+          if (!(levelMm>=0 && volumeM3>=0 && isValidPh(pH))) return setError(t('errTank')), false;
+          for (const ef of state.effluents) if (!(ef.volumeM3>=0 && isValidPh(ef.pH))) return setError(t('errPh')), false;
         }
-        renderResults();
-      });
+        if (id==='results' && state.neutralization.mode==='effluent' && !isValidPh(state.neutralization.referencePh)) return setError(t('invalidNeutralizerPh')), false;
+        setError(''); return true;
+      }
 
-      $('neutralizerPh').addEventListener('input', (e)=> {
-        state.neutralization.referencePh = Number(e.target.value);
-        const valid = isValidPh(state.neutralization.referencePh);
-        $('neutralizerPhError').textContent = valid ? '' : t('invalidNeutralizerPh');
-        renderResults();
-      });
+      function computeMixedState(){
+        const tankL = m3ToL(state.tankState.volumeM3); let totalH = state.tankState.pH<7 ? hFromPh(state.tankState.pH)*tankL : 0; let totalOH = state.tankState.pH>7 ? ohFromPh(state.tankState.pH)*tankL : 0; let totalM3 = Number(state.tankState.volumeM3)||0;
+        state.effluents.forEach(ef=>{ const l=m3ToL(ef.volumeM3); totalM3 += Number(ef.volumeM3)||0; if (ef.kind==='acid') totalH += hFromPh(ef.pH)*l; else totalOH += ohFromPh(ef.pH)*l; });
+        const totalL = m3ToL(totalM3); let finalPh = 7;
+        if (totalL>0){ if (totalH>totalOH) finalPh = -Math.log10(Math.max((totalH-totalOH)/totalL,1e-14)); else if (totalOH>totalH) finalPh = 14 + Math.log10(Math.max((totalOH-totalH)/totalL,1e-14)); }
+        return { finalVolumeM3: totalM3, finalLevelMm: state.tankState.levelMm + m3ToMm(totalM3-state.tankState.volumeM3), finalPh: Math.min(14,Math.max(0,finalPh)), totalEffluentVolumeM3: Math.max(0,totalM3-state.tankState.volumeM3)};
+      }
 
-      $('btnHome').addEventListener('click', ()=> showScreen('language'));
-      $('btnBack').addEventListener('click', ()=> previousScreen());
-      $('btnNext').addEventListener('click', ()=> nextScreen());
-    }
+      function calculateNeutralization(){
+        const task = state.selectedTask; let source = {volumeM3:state.tankState.volumeM3, levelMm:state.tankState.levelMm, pH:state.tankState.pH};
+        if (task==='Recepción de Efluentes'){ const mix=computeMixedState(); Object.assign(state, {totalEffluentVolumeM3:mix.totalEffluentVolumeM3,totalLevelIncreaseMm:m3ToMm(mix.totalEffluentVolumeM3),finalLevelMm:mix.finalLevelMm,finalVolumeM3:mix.finalVolumeM3,finalPh:mix.finalPh}); source={volumeM3:mix.finalVolumeM3,levelMm:mix.finalLevelMm,pH:mix.finalPh}; }
+        else { state.finalLevelMm=state.tankState.levelMm; state.finalVolumeM3=state.tankState.volumeM3; state.finalPh=state.tankState.pH; }
+        const mode = task==='Acondicionamiento de la pileta' ? 'chemicals' : state.neutralization.mode;
+        let equivalents=0,species='',requiredType='',requiredConcentration=null,referencePh=null,reagentEqPerL=0;
+        if (Math.abs(source.pH-CAL.PH_TARGET)>=0.15){
+          if (source.pH < CAL.PH_TARGET){ equivalents = hFromPh(source.pH)*m3ToL(source.volumeM3); species='H+'; if (mode==='effluent' && task==='Recepción de Efluentes'){ requiredType='LH'; referencePh=isValidPh(state.neutralization.referencePh)?Number(state.neutralization.referencePh):12.5; reagentEqPerL=ohFromPh(referencePh);} else {requiredType='NaOH'; requiredConcentration=Number(state.chemicals.naohPct); reagentEqPerL=naohEqPerL(requiredConcentration);} }
+          else { equivalents = ohFromPh(source.pH)*m3ToL(source.volumeM3); species='OH-'; if (mode==='effluent' && task==='Recepción de Efluentes'){ requiredType='IX'; referencePh=isValidPh(state.neutralization.referencePh)?Number(state.neutralization.referencePh):1.5; reagentEqPerL=hFromPh(referencePh);} else {requiredType='H2SO4'; requiredConcentration=Number(state.chemicals.h2so4Pct); reagentEqPerL=h2so4EqPerL(requiredConcentration);} }
+        }
+        const requiredVolumeL = reagentEqPerL>0 ? equivalents/reagentEqPerL : 0;
+        const requiredVolumeM3 = requiredVolumeL/1000;
+        const levelIncreaseMm = m3ToMm(requiredVolumeM3);
+        state.resultingTankState=source;
+        state.neutralization={mode,requiredType,requiredConcentration,referencePh,equivalentsToNeutralize:equivalents,reagentEqPerL,requiredVolumeL,requiredVolumeM3,levelIncreaseMm,projectedFinalLevelMm:source.levelMm+levelIncreaseMm,species};
+      }
 
-    function init(){
-      bind();
-      renderI18n();
-      $('languageSelect').value = state.selectedLanguage;
-      $('tankLevelMm').value = '0';
-      $('tankVolumeM3').value = '0';
-      $('tankPh').value = '7';
-      $('eff1Vol').value = '0'; $('eff1Ph').value = '7'; $('eff2Vol').value = '0'; $('eff2Ph').value = '7';
-      $('eff1Kind').value = 'acid'; $('eff2Kind').value = 'acid';
-      $('modeSelect').value = state.neutralization.mode;
-      showScreen('language');
-      renderResults();
-    }
-    init();
-  </script>
-</body>
+      function renderResults(){
+        calculateNeutralization();
+        const task = state.selectedTask; const n = state.neutralization;
+        $('modeBlock').style.display = task==='Recepción de Efluentes' ? 'block' : 'none';
+        $('modeSelect').value = n.mode;
+        const showNeutral = task==='Recepción de Efluentes' && n.mode==='effluent' && (n.requiredType==='LH' || n.requiredType==='IX');
+        $('neutralizerPhField').style.display = showNeutral ? 'block' : 'none';
+        if (showNeutral){ $('neutralizerPhLabel').textContent = n.requiredType==='LH' ? t('neutralizerPhLH') : t('neutralizerPhIX'); $('neutralizerPh').value = isValidPh(n.referencePh)?n.referencePh:(n.requiredType==='LH'?12.5:1.5); }
+
+        $('stateSummary').innerHTML = task==='Recepción de Efluentes'
+          ? `<div>${t('levelMm')}: <b>${fmt(state.finalLevelMm,2)}</b></div><div>${t('volumeM3')}: <b>${fmt(state.finalVolumeM3,3)}</b></div><div>${t('phLabel')}: <b>${fmt(state.finalPh,2)}</b></div>`
+          : `<div>${t('levelMm')}: <b>${fmt(state.tankState.levelMm,2)}</b></div><div>${t('volumeM3')}: <b>${fmt(state.tankState.volumeM3,3)}</b></div><div>${t('phLabel')}: <b>${fmt(state.tankState.pH,2)}</b></div>`;
+
+        $('methodSummary').innerHTML = `<div>${t('modeLabel')}: <b>${n.mode==='effluent'?t('modeEffluent'):t('modeChemicals')}</b></div><div>${t('methodCalc')}: <b>${t('stoichMethodText')} ${CAL.PH_TARGET}</b></div>`;
+        $('reagentSummary').innerHTML = `<div>${t('typeLabel')}: <b>${n.requiredType||'-'}</b></div><div>${t('concentrationLabel')}: <b>${n.requiredConcentration?`${n.requiredConcentration}%`:'-'}</b></div><div>${t('referencePhLabel')}: <b>${n.referencePh!==null?fmt(n.referencePh,2):'-'}</b></div><div>Eq/L: <b>${fmt(n.reagentEqPerL,6)}</b></div>`;
+        $('calcSummary').innerHTML = `<div>${t('species')}: <b>${n.species||'-'}</b></div><div>${t('eqNeutralize')}: <b>${fmt(n.equivalentsToNeutralize,6)} eq</b></div><div>${t('volumeLabel')}: <b>${fmt(n.requiredVolumeL,2)} L (${fmt(n.requiredVolumeM3,4)} m³)</b></div><div>${t('levelDeltaLabel')}: <b>${fmt(n.levelIncreaseMm,3)} mm</b></div><div>${t('projectedLevelLabel')}: <b>${fmt(n.projectedFinalLevelMm,3)} mm</b></div>${n.equivalentsToNeutralize===0?`<div class="warn">${t('nearNeutral')}</div>`:''}`;
+
+        $('requiredKpi').textContent = `${fmt(n.requiredVolumeL,2)} L`;
+        const over = n.projectedFinalLevelMm > CAL.TANK_MAX_MM;
+        $('overflowWarn').style.display = over ? 'block' : 'none';
+        $('overflowWarn').textContent = over ? t('overflow') : '';
+      }
+
+      function bind(){
+        $('languageSelect').addEventListener('change', e=>{ state.selectedLanguage=e.target.value; renderI18n(); });
+        $('taskSelect').addEventListener('change', e=>{ state.selectedTask=e.target.value; renderResults(); });
+        $('tankLevelMm').addEventListener('input', e=>{ state.tankState.levelMm=Number(e.target.value)||0; if(!$('tankVolumeM3').value) {state.tankState.volumeM3=mmToM3(state.tankState.levelMm); $('tankVolumeM3').value=fmt(state.tankState.volumeM3,3);} renderResults();});
+        $('tankVolumeM3').addEventListener('input', e=>{ state.tankState.volumeM3=Number(e.target.value)||0; renderResults();});
+        $('tankPh').addEventListener('input', e=>{ state.tankState.pH=Number(e.target.value)||7; renderResults();});
+        ['1','2'].forEach(i=>{ $('eff'+i+'Vol').addEventListener('input',e=>{ state.effluents[i-1].volumeM3=Number(e.target.value)||0; renderResults();}); $('eff'+i+'Ph').addEventListener('input',e=>{ state.effluents[i-1].pH=Number(e.target.value)||7; renderResults();}); $('eff'+i+'Kind').addEventListener('change',e=>{ state.effluents[i-1].kind=e.target.value; renderResults();}); });
+        $('naohPct').addEventListener('change',e=>{ state.chemicals.naohPct=Number(e.target.value); renderResults();});
+        $('h2so4Pct').addEventListener('change',e=>{ state.chemicals.h2so4Pct=Number(e.target.value); renderResults();});
+        $('modeSelect').addEventListener('change',e=>{ state.neutralization.mode=e.target.value; if (e.target.value==='effluent') state.neutralization.referencePh = state.finalPh<7?12.5:1.5; renderResults();});
+        $('neutralizerPh').addEventListener('input',e=>{ state.neutralization.referencePh=Number(e.target.value); $('neutralizerPhError').textContent = isValidPh(state.neutralization.referencePh)?'':t('invalidNeutralizerPh'); renderResults();});
+        $('btnHome').addEventListener('click',()=>showScreen('language'));
+        $('btnBack').addEventListener('click',()=>{ const i=screens.indexOf(currentScreen); if(i>0) showScreen(screens[i-1]);});
+        $('btnNext').addEventListener('click',()=>{ const i=screens.indexOf(currentScreen); if(!isScreenValid(currentScreen)) return; if(i<screens.length-1){ showScreen(screens[i+1]); if(screens[i+1]==='results') renderResults(); }});
+      }
+
+      function init(){
+        bind(); renderI18n();
+        $('languageSelect').value='es';
+        $('tankLevelMm').value='0'; $('tankVolumeM3').value='0'; $('tankPh').value='7';
+        $('eff1Vol').value='0'; $('eff1Ph').value='7'; $('eff2Vol').value='0'; $('eff2Ph').value='7';
+        $('eff1Kind').value='acid'; $('eff2Kind').value='acid';
+        showScreen('language'); renderResults();
+      }
+      init();
+    </script>
+  </body>
 </html>
