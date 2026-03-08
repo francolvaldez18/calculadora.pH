@@ -52,7 +52,7 @@
         inset: 0;
         z-index: -2;
         opacity: 0.12;
-        background-image: url("PoscoArg.png");
+        background-image: url("POSCO_logo.svg");
         background-position: center;
         background-repeat: no-repeat;
         background-size: min(72vw, 700px);
@@ -70,7 +70,7 @@
         top: 1.2rem;
         left: 50%;
         transform: translateX(-50%);
-        width: min(300px, 68vw);
+        width: min(240px, 60vw);
         filter: drop-shadow(0 5px 10px rgba(5, 43, 72, 0.15));
       }
 
@@ -196,7 +196,7 @@
       <div class="background-image" aria-hidden="true"></div>
       <div class="background-logo" aria-hidden="true"></div>
       <div class="overlay" aria-hidden="true"></div>
-      <img class="top-logo" alt="Logo POSCO Argentina" src="PoscoArg.png" />
+      <img class="top-logo" alt="Logo POSCO" src="POSCO_logo.svg" />
 
       <section class="content">
         <div class="header">
@@ -336,7 +336,7 @@
         $('h2so4Pct').value = state.chemicals.h2so4Pct;
       }
 
-      function renderTabs(){ $('tabs').innerHTML = [['language',t('tabLanguage')],['task',t('tabTask')],['state',t('tabState')],['chemicals',t('tabChem')],['results',t('tabRes')].map(([id,lb])=>`<span class="tab ${currentScreen===id?'active':''}">${lb}</span>`).join(''); }
+      function renderTabs(){ $('tabs').innerHTML = [['language',t('tabLanguage')],['task',t('tabTask')],['state',t('tabState')],['chemicals',t('tabChem')],['results',t('tabRes')]].map(([id,lb])=>`<span class="tab ${currentScreen===id?'active':''}">${lb}</span>`).join(''); }
       function renderI18n(){ document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n)); document.documentElement.lang = state.selectedLanguage; buildSelects(); renderTabs(); renderResults(); }
 
       function setError(msg){ $('screenError').textContent = msg; }
