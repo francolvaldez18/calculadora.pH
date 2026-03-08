@@ -6,13 +6,13 @@
   <title>Calculadora pH</title>
   <style>
     :root {
-      --blue-900: #0d2a57;
-      --blue-700: #1e4b8f;
-      --blue-500: #2f67c1;
-      --blue-300: #87afea;
-      --bg: #eaf2ff;
-      --white: #ffffff;
-      --muted: #9bb3d9;
+      --overlay-color: rgba(255, 255, 255, 0.76);
+      --panel-color: rgba(255, 255, 255, 0.86);
+      --text-primary: #093a63;
+      --text-secondary: #325f83;
+      --button-text: #ffffff;
+      --button-bg: #0d6eaa;
+      --button-bg-hover: #1285cb;
     }
 
     * {
@@ -22,20 +22,32 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, var(--blue-300), var(--bg));
+      font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-primary);
+      background-color: #e9edf2;
       display: grid;
       place-items: center;
-      color: var(--blue-900);
-      padding: 16px;
+      padding: 1rem;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: var(--overlay-color);
+      pointer-events: none;
     }
 
     .content {
-      width: min(100%, 520px);
-      background: var(--white);
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 12px 40px rgba(13, 42, 87, 0.16);
+      width: min(900px, 100%);
+      background: var(--panel-color);
+      border: 1px solid rgba(73, 119, 153, 0.2);
+      border-radius: 20px;
+      padding: clamp(1.5rem, 5vw, 3rem);
+      box-shadow: 0 18px 35px rgba(9, 58, 99, 0.12);
+      position: relative;
+      z-index: 1;
     }
 
     .screen {
@@ -47,90 +59,68 @@
     }
 
     h1 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-size: 30px;
+      margin: 0 0 1.25rem;
       text-align: center;
-      color: var(--blue-900);
+      color: var(--text-primary);
     }
 
-    .button-group {
+    .button-stack {
       display: grid;
-      gap: 12px;
-      margin-bottom: 18px;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
     }
 
-    .option-btn,
-    .primary-btn {
-      width: 100%;
-      border: 2px solid var(--blue-700);
+    .language-button,
+    .task-button,
+    .next-button {
+      border: none;
       border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 19px;
+      padding: 0.95rem 1rem;
       font-weight: 700;
+      color: var(--button-text);
+      background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
       cursor: pointer;
-      transition: all 0.2s ease;
-      background: var(--white);
-      color: var(--blue-700);
+      width: 100%;
+      font-size: 1rem;
+      transition: filter 0.2s ease;
     }
 
-    .option-btn:hover,
-    .primary-btn:hover:enabled {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(30, 75, 143, 0.15);
+    .language-button:hover,
+    .task-button:hover,
+    .next-button:hover:enabled {
+      filter: brightness(1.05);
     }
 
-    .option-btn.active {
-      background: var(--blue-500);
-      color: var(--white);
-      border-color: var(--blue-500);
+    .language-button.active,
+    .task-button.active {
+      background: linear-gradient(180deg, #0f8adb, #0a5f96);
     }
 
-    .primary-btn {
-      background: var(--blue-700);
-      color: var(--white);
-    }
-
-    .primary-btn:disabled {
+    .next-button:disabled {
       opacity: 0.45;
-      border-color: var(--muted);
-      background: var(--muted);
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
+      filter: none;
     }
 
     .field {
-      margin-bottom: 12px;
+      margin-bottom: 0.9rem;
     }
 
     label {
       display: block;
-      margin-bottom: 6px;
-      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--text-secondary);
+      font-weight: 600;
     }
 
     input {
       width: 100%;
-      border: 2px solid var(--blue-300);
+      border: 1px solid rgba(73, 119, 153, 0.35);
       border-radius: 10px;
-      padding: 10px;
-      font-size: 16px;
-    }
-
-    @media (max-width: 480px) {
-      .content {
-        padding: 20px;
-      }
-
-      h1 {
-        font-size: 24px;
-      }
-
-      .option-btn,
-      .primary-btn {
-        font-size: 16px;
-      }
+      padding: 0.75rem;
+      font: inherit;
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.95);
     }
   </style>
 </head>
@@ -138,21 +128,21 @@
   <main class="content">
     <section id="screen-language" class="screen active">
       <h1 id="title-language">Selecciona el idioma</h1>
-      <div class="button-group" id="language-options">
-        <button class="option-btn" data-language="es">Español</button>
-        <button class="option-btn" data-language="en">English</button>
-        <button class="option-btn" data-language="ko">한국어</button>
+      <div class="button-stack" id="language-options">
+        <button class="language-button" data-language="es">Español</button>
+        <button class="language-button" data-language="en">English</button>
+        <button class="language-button" data-language="ko">한국어</button>
       </div>
-      <button id="btn-language-next" class="primary-btn" disabled>Siguiente</button>
+      <button id="btn-language-next" class="next-button" disabled>Siguiente</button>
     </section>
 
     <section id="screen-task" class="screen">
       <h1 id="title-task">Selecciona la tarea</h1>
-      <div class="button-group" id="task-options">
-        <button class="option-btn" data-task="effluent_reception">Recepción de Efluentes</button>
-        <button class="option-btn" data-task="tank_conditioning">Acondicionamiento de la pileta</button>
+      <div class="button-stack" id="task-options">
+        <button class="task-button" data-task="effluent_reception">Recepción de Efluentes</button>
+        <button class="task-button" data-task="tank_conditioning">Acondicionamiento de la pileta</button>
       </div>
-      <button id="btn-task-next" class="primary-btn" disabled>Siguiente</button>
+      <button id="btn-task-next" class="next-button" disabled>Siguiente</button>
     </section>
 
     <section id="screen-pool-status" class="screen">
@@ -171,17 +161,6 @@
   <script>
     let selectedLanguage = null;
     let selectedTask = null;
-
-    const screens = {
-      language: document.getElementById('screen-language'),
-      task: document.getElementById('screen-task'),
-      poolStatus: document.getElementById('screen-pool-status')
-    };
-
-    const languageOptions = document.querySelectorAll('#language-options .option-btn');
-    const taskOptions = document.querySelectorAll('#task-options .option-btn');
-    const languageNextBtn = document.getElementById('btn-language-next');
-    const taskNextBtn = document.getElementById('btn-task-next');
 
     const i18n = {
       es: {
@@ -219,50 +198,65 @@
       }
     };
 
-    function showScreen(target) {
+    const screens = {
+      language: document.getElementById('screen-language'),
+      task: document.getElementById('screen-task'),
+      poolStatus: document.getElementById('screen-pool-status')
+    };
+
+    const languageButtons = document.querySelectorAll('.language-button');
+    const taskButtons = document.querySelectorAll('.task-button');
+    const languageNextButton = document.getElementById('btn-language-next');
+    const taskNextButton = document.getElementById('btn-task-next');
+
+    function showScreen(screenKey) {
       Object.values(screens).forEach((screen) => screen.classList.remove('active'));
-      screens[target].classList.add('active');
+      screens[screenKey].classList.add('active');
     }
 
     function applyTranslations() {
       const t = i18n[selectedLanguage || 'es'];
       document.getElementById('title-language').textContent = t.languageTitle;
-      languageNextBtn.textContent = t.languageNext;
+      languageNextButton.textContent = t.languageNext;
       document.getElementById('title-task').textContent = t.taskTitle;
-      taskOptions[0].textContent = t.task1;
-      taskOptions[1].textContent = t.task2;
-      taskNextBtn.textContent = t.taskNext;
+      taskButtons[0].textContent = t.task1;
+      taskButtons[1].textContent = t.task2;
+      taskNextButton.textContent = t.taskNext;
       document.getElementById('title-pool-status').textContent = t.poolTitle;
       document.getElementById('label-level').textContent = t.levelLabel;
       document.getElementById('label-ph').textContent = t.phLabel;
     }
 
-    languageOptions.forEach((button) => {
+    languageButtons.forEach((button) => {
       button.addEventListener('click', () => {
-        languageOptions.forEach((item) => item.classList.remove('active'));
+        languageButtons.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
         selectedLanguage = button.dataset.language;
-        languageNextBtn.disabled = false;
+        languageNextButton.disabled = false;
         applyTranslations();
       });
     });
 
-    taskOptions.forEach((button) => {
+    taskButtons.forEach((button) => {
       button.addEventListener('click', () => {
-        taskOptions.forEach((item) => item.classList.remove('active'));
+        taskButtons.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
         selectedTask = button.dataset.task;
-        taskNextBtn.disabled = false;
+        taskNextButton.disabled = false;
       });
     });
 
-    languageNextBtn.addEventListener('click', () => {
-      if (!selectedLanguage) return;
+    languageNextButton.addEventListener('click', () => {
+      if (!selectedLanguage) {
+        return;
+      }
       showScreen('task');
     });
 
-    taskNextBtn.addEventListener('click', () => {
-      if (!selectedTask) return;
+    taskNextButton.addEventListener('click', () => {
+      if (!selectedTask) {
+        return;
+      }
       showScreen('poolStatus');
     });
 
