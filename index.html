@@ -215,27 +215,28 @@
         gap: 0.9rem;
       }
       .language-button {
-        border: none;
+        border: 2px solid #0d6eaa;
         border-radius: 12px;
         padding: 0.95rem 1rem;
-        font-size: clamp(1rem, 2vw, 1.05rem);
-        font-weight: 700;
-        color: var(--button-text);
-        background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
+        font-size: clamp(1.08rem, 2.2vw, 1.2rem);
+        font-weight: 800;
+        color: #0d6eaa;
+        background: #ffffff;
         cursor: pointer;
-        transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
         box-shadow: 0 8px 16px rgba(9, 58, 99, 0.2);
       }
       .language-button:hover,
       .language-button:focus-visible {
         transform: translateY(-2px);
-        background: linear-gradient(180deg, #1a92da, #0d6eaa);
+        background: #eef7ff;
         box-shadow: 0 10px 22px rgba(9,58,99,0.28);
         outline: 2px solid rgba(13,110,170,0.35);
         outline-offset: 1px;
       }
       .language-button.active {
-        background: linear-gradient(180deg, #0f8adb, #0a5f96);
+        background: linear-gradient(180deg, #1285cb, #0d6eaa);
+        color: #ffffff;
         box-shadow: 0 10px 22px rgba(9,58,99,0.3);
       }
       .welcome-actions {
@@ -246,8 +247,8 @@
       .welcome-next { min-width: min(280px, 100%); }
       .choice-label { margin-bottom: 0.7rem; color: var(--text-secondary); font-weight: 600; }
       .choice-buttons { display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)); gap: 0.8rem; }
-      .choice-button { border: none; border-radius: 12px; padding: 0.85rem 0.9rem; font-weight: 700; color: var(--button-text); background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg)); box-shadow: 0 8px 16px rgba(9, 58, 99, 0.2); cursor: pointer; }
-      .choice-button.active { background: linear-gradient(180deg, #0f8adb, #0a5f96); box-shadow: 0 10px 22px rgba(9,58,99,0.3); }
+      .choice-button { border: 2px solid #0d6eaa; border-radius: 12px; padding: 0.9rem 1rem; font-size: clamp(1.02rem, 1.8vw, 1.12rem); font-weight: 800; color: #0d6eaa; background: #ffffff; box-shadow: 0 8px 16px rgba(9, 58, 99, 0.2); cursor: pointer; }
+      .choice-button.active { background: linear-gradient(180deg, #1285cb, #0d6eaa); color: #ffffff; box-shadow: 0 10px 22px rgba(9,58,99,0.3); }
       .kind-buttons { display: grid; grid-template-columns: repeat(2, minmax(90px, 1fr)); gap: 0.5rem; }
 
       @media (max-width: 860px) {
