@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora pH | Selección de idioma</title>
+    <style>
+      :root {
+        --overlay-color: rgba(255, 255, 255, 0.76);
+        --panel-color: rgba(255, 255, 255, 0.86);
+        --text-primary: #093a63;
+        --text-secondary: #325f83;
+        --button-text: #ffffff;
+        --button-bg: #0d6eaa;
+        --button-bg-hover: #1285cb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        color: var(--text-primary);
+        background-color: #e9edf2;
+      }
+
+      .welcome-screen {
+        position: relative;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 8rem 1.25rem 2rem;
+        overflow: hidden;
+      }
+
+      .background-image {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(13, 110, 170, 0.12), transparent 35%),
+          radial-gradient(circle at 80% 40%, rgba(13, 110, 170, 0.08), transparent 38%),
+          linear-gradient(180deg, #f5f7fa 0%, #e8edf3 100%);
+      }
+
+      .background-logo {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        opacity: 0.12;
+        background-image:
+          url("PoscoArg.png"),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' viewBox='0 0 900 900'%3E%3Ctext x='50%25' y='45%25' text-anchor='middle' fill='%230b67a4' font-size='130' font-family='Segoe UI, Arial, sans-serif' font-weight='700'%3EPOSCO%3C/text%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' fill='%230b67a4' font-size='90' font-family='Segoe UI, Arial, sans-serif' font-weight='700'%3EARGENTINA%3C/text%3E%3C/svg%3E");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: min(72vw, 700px);
+      }
+
+      /* TODO: Confirmar versión final de PoscoArg.png y reemplazar este fallback cuando corresponda. */
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--overlay-color);
+        z-index: -1;
+      }
+
+      .top-logo {
+        position: absolute;
+        top: 1.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(300px, 68vw);
+        filter: drop-shadow(0 5px 10px rgba(5, 43, 72, 0.15));
+      }
+
+      .content {
+        width: min(900px, 100%);
+        background: var(--panel-color);
+        border: 1px solid rgba(73, 119, 153, 0.2);
+        border-radius: 20px;
+        padding: clamp(1.5rem, 5vw, 3rem);
+        box-shadow: 0 18px 35px rgba(9, 58, 99, 0.12);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.35rem, 2.5vw, 2.25rem);
+        line-height: 1.35;
+        text-wrap: balance;
+      }
+
+      .description {
+        margin: 1rem auto 0;
+        max-width: 70ch;
+        color: var(--text-secondary);
+        font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+        line-height: 1.55;
+      }
+
+      .language-label {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: #174e78;
+        font-size: clamp(1rem, 1.8vw, 1.2rem);
+      }
+
+      .language-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 0.9rem;
+      }
+
+      .language-button,
+      .next-button {
+        border: none;
+        border-radius: 12px;
+        padding: 0.95rem 1rem;
+        font-size: clamp(1rem, 2vw, 1.15rem);
+        font-weight: 700;
+        color: var(--button-text);
+        background: linear-gradient(180deg, var(--button-bg-hover), var(--button-bg));
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        box-shadow: 0 8px 16px rgba(9, 58, 99, 0.2);
+      }
+
+      .language-button:hover,
+      .language-button:focus-visible,
+      .next-button:hover,
+      .next-button:focus-visible {
+        transform: translateY(-2px);
+        background: linear-gradient(180deg, #1a92da, #0d6eaa);
+        box-shadow: 0 10px 22px rgba(9, 58, 99, 0.28);
+        outline: 2px solid rgba(13, 110, 170, 0.35);
+        outline-offset: 1px;
+      }
+
+      .language-button:active,
+      .next-button:active {
+        transform: translateY(0);
+      }
+
+      .language-button.active {
+        background: linear-gradient(180deg, #0f8adb, #0a5f96);
+        box-shadow: 0 10px 22px rgba(9, 58, 99, 0.3);
+      }
+
+      .actions {
+        margin-top: 1.1rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .next-button {
+        min-width: min(280px, 100%);
+      }
+
+      @media (max-width: 700px) {
+        .welcome-screen {
+          padding-top: 6.8rem;
+        }
+
+        .content {
+          border-radius: 16px;
+        }
+
+        .language-buttons {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="welcome-screen" role="main" aria-labelledby="main-title">
+      <div class="background-image" aria-hidden="true"></div>
+      <div class="background-logo" aria-hidden="true"></div>
+      <div class="overlay" aria-hidden="true"></div>
+
+      <img
+        class="top-logo"
+        alt="Logo POSCO Argentina"
+        src="PoscoArg.png"
+      />
+
+      <section class="content">
+        <h1 id="main-title"></h1>
+        <p class="description" id="main-description"></p>
+        <p class="language-label" id="language-label"></p>
+
+        <div class="language-buttons" role="group" aria-label="Selección de idioma">
+          <button class="language-button" data-lang="en">English</button>
+          <button class="language-button" data-lang="es">Español</button>
+          <button class="language-button" data-lang="ko">한국어</button>
+        </div>
+
+        <div class="actions">
+          <button class="next-button" id="next-button" type="button"></button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Configuración preparada para internacionalización futura (i18n)
+      const languageConfig = {
+        es: {
+          htmlLang: "es",
+          title: "Calculadora pH - WWT - Utilities - Departamento de Producción LH Güemes",
+          description: "Cálculo de reactivo de neutralización para la planta de tratamiento de aguas.",
+          selectLanguage: "Seleccionar idioma",
+          next: "Siguiente"
+        },
+        en: {
+          htmlLang: "en",
+          title: "pH Calculator - WWT - Utilities - LH Güemes Production Department",
+          description: "Neutralization reagent calculation for the water treatment plant.",
+          selectLanguage: "Select language",
+          next: "Next"
+        },
+        ko: {
+          htmlLang: "ko",
+          title: "pH 계산기 - WWT - Utilities - LH Güemes 생산 부서",
+          description: "수처리 플랜트용 중화 시약 계산.",
+          selectLanguage: "언어 선택",
+          next: "다음"
+        }
+      };
+
+      let selectedLanguage = "es";
+
+      function applyLanguage(langCode) {
+        const langData = languageConfig[langCode];
+
+        document.documentElement.lang = langData.htmlLang;
+        document.getElementById("main-title").textContent = langData.title;
+        document.getElementById("main-description").textContent = langData.description;
+        document.getElementById("language-label").textContent = langData.selectLanguage;
+        document.getElementById("next-button").textContent = langData.next;
+
+        document.querySelectorAll(".language-button").forEach((button) => {
+          button.classList.toggle("active", button.dataset.lang === langCode);
+        });
+      }
+
+      function handleLanguageSelection(event) {
+        const langCode = event.currentTarget.dataset.lang;
+        selectedLanguage = langCode;
+        applyLanguage(selectedLanguage);
+
+        // Aquí se conectará más adelante la lógica para traducir toda la app.
+        console.log(`Idioma seleccionado: ${langCode}`);
+      }
+
+      function handleNext() {
+        // Aquí se conectará más adelante la navegación real a la siguiente pantalla.
+        console.log(`Continuar con idioma: ${selectedLanguage}`);
+      }
+
+      document.querySelectorAll(".language-button").forEach((button) => {
+        button.addEventListener("click", handleLanguageSelection);
+      });
+
+      document.getElementById("next-button").addEventListener("click", handleNext);
+
+      // Estado inicial: mostrar todo en español por defecto.
+      applyLanguage(selectedLanguage);
+    </script>
+  </body>
+</html>
