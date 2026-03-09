@@ -91,7 +91,7 @@
 
       const state={selectedLanguage:'es',selectedTask:'',tankState:{levelMm:2000,volumeM3:0,pH:7},chemicals:{naohPct:30,h2so4Pct:98},effluents:[{name:'LH',volumeM3:0,pH:7}],neutralization:{mode:'chemicals',referencePh:null}};
       let currentScreen='language';
-      const $=id=>document.getElementById(id); const t=k=>tr[state.selectedLanguage][k]??k; const fmt=(v,n=3)=>Number(v).toFixed(n);
+      const $=id=>document.getElementById(id); const t=k=>tr[state.selectedLanguage][k]??k; const fmt=(v,n=3)=>Number(v).toFixed(n); const num=(v,fb=NaN)=>{ if(typeof v==='number') return Number.isFinite(v)?v:fb; const n=Number(String(v).replace(',', '.').trim()); return Number.isFinite(n)?n:fb; };
       const mmToM3=mm=>(Number(mm)||0)*(CAL.MM_EQ_M3_DEN/CAL.MM_EQ_M3_NUM); const m3ToL=m3=>(Number(m3)||0)*1000; const m3ToMm=m3=>(Number(m3)||0)*(CAL.MM_EQ_M3_NUM/CAL.MM_EQ_M3_DEN);
       const hFromPh=ph=>Math.pow(10,-Math.min(14,Math.max(0,Number(ph)||0))); const ohFromPh=ph=>Math.pow(10,-(14-Math.min(14,Math.max(0,Number(ph)||0))));
       const naohEqPerL=pct=>((CAL.naohDensity[pct]||CAL.naohDensity[30])*(pct/100)*1000)/CAL.PM_NAOH; const h2so4EqPerL=pct=>(((CAL.h2so4Density[pct]||CAL.h2so4Density[98])*(pct/100)*1000)/CAL.PM_H2SO4)*2;
@@ -103,7 +103,7 @@
       function validateState(){
         const lRaw=$('tankLevelMm').value.trim(), pRaw=$('tankPh').value.trim();
         let lOk=true,pOk=true,lMsg='',pMsg='';
-        const l=Number(lRaw), p=Number(pRaw);
+        const l=num(lRaw), p=num(pRaw);
         if(lRaw===''||Number.isNaN(l)){lOk=false;lMsg=t('levelInvalid')} else if(l<1200){lOk=false;lMsg=t('levelLow')} else if(l>4000){lOk=false;lMsg=t('levelHigh')}
         if(pRaw===''||Number.isNaN(p)||p<0||p>14){pOk=false;pMsg=t('errPh')}
         $('levelError').textContent=lMsg; $('phError').textContent=pMsg; $('tankLevelMm').classList.toggle('input-invalid',!lOk); $('tankPh').classList.toggle('input-invalid',!pOk);
@@ -114,7 +114,7 @@
       function isValid(screen){
         if(screen==='task'&&!state.selectedTask){setError(t('errSelectTask'));return false;}
         if(screen==='state'&&!validateState()){setError('');return false;}
-        if(screen==='effluents'){for(const e of state.effluents){const vol=Number(e.volumeM3), ph=Number(e.pH); if(!Number.isFinite(vol)||vol<0||!Number.isFinite(ph)||ph<0||ph>14){setError(t('errPh'));return false;}}}
+        if(screen==='effluents'){for(const e of state.effluents){const vol=num(e.volumeM3), ph=num(e.pH); if(!Number.isFinite(vol)||vol<0||!Number.isFinite(ph)||ph<0||ph>14){setError(t('errPh'));return false;}}}
         setError(''); return true;
       }
       function show(id){ currentScreen=id; ['language','task','state','effluents','results'].forEach(s=>$('screen-'+s).classList.toggle('active',s===id)); $('btnBack').disabled=id==='language'; const hide=id==='language'; $('tabs').style.display=hide?'none':'flex'; $('globalNav').style.display=hide?'none':'flex'; renderTabs(); $('btnNext').disabled=id==='state'?!validateState():false; }
@@ -126,7 +126,7 @@
         $('effluentList').querySelectorAll('select[data-f="name"]').forEach(el=>el.addEventListener('change',e=>{const ix=Number(e.target.dataset.ix); state.effluents[ix].name=e.target.value; renderResults();}));
         $('effluentList').querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{
           const ix=Number(e.target.dataset.ix), f=e.target.dataset.f, raw=e.target.value;
-          state.effluents[ix][f]=raw===''?NaN:Number(raw);
+          state.effluents[ix][f]=raw===''?NaN:num(raw);
           if(f==='pH'){ const kindEl=$('effluentList').querySelector(`[data-kind-ix="${ix}"]`); if(kindEl) kindEl.textContent=t(effluentKind(Number(state.effluents[ix].pH)||7)); }
           renderResults();
         }));
@@ -142,11 +142,11 @@
       function calculateEffluentEqPerL(ph, kind){ return kind==='LH'?ohFromPh(ph):hFromPh(ph); }
 
       function mixStreams(baseTank, effluents){
-        let totalM3=Math.max(0,Number(baseTank.volumeM3)||0), totalH=0, totalOH=0;
-        const baseL=m3ToL(totalM3), basePh=Math.min(14,Math.max(0,Number(baseTank.pH)||7));
+        let totalM3=Math.max(0,num(baseTank.volumeM3,0)), totalH=0, totalOH=0;
+        const baseL=m3ToL(totalM3), basePh=Math.min(14,Math.max(0,num(baseTank.pH,7))); 
         if(basePh<7) totalH+=hFromPh(basePh)*baseL; else if(basePh>7) totalOH+=ohFromPh(basePh)*baseL;
         effluents.forEach(e=>{
-          const vm3=Math.max(0,Number(e.volumeM3)||0), eph=Math.min(14,Math.max(0,Number(e.pH)||7)), l=m3ToL(vm3);
+          const vm3=Math.max(0,num(e.volumeM3,0)), eph=Math.min(14,Math.max(0,num(e.pH,7))), l=m3ToL(vm3);
           totalM3+=vm3;
           if(eph<7) totalH+=hFromPh(eph)*l; else if(eph>7) totalOH+=ohFromPh(eph)*l;
         });
@@ -156,21 +156,21 @@
           if(totalH>totalOH) ph=-Math.log10(Math.max((totalH-totalOH)/totalL,1e-14));
           else if(totalOH>totalH) ph=14+Math.log10(Math.max((totalOH-totalH)/totalL,1e-14));
         }
-        return {volumeM3:totalM3, levelMm:(Number(baseTank.levelMm)||0)+m3ToMm(totalM3-(Number(baseTank.volumeM3)||0)), pH:Math.min(14,Math.max(0,ph))};
+        return {volumeM3:totalM3, levelMm:num(baseTank.levelMm,0)+m3ToMm(totalM3-num(baseTank.volumeM3,0)), pH:Math.min(14,Math.max(0,ph))};
       }
 
       function calculateNeutralizationForState(srcState, options={}){
-        const safetyFactor=Number(options.safetyFactor)||1.25, pumpExtraM3=Number(options.pumpExtraM3)||0, targetPh=CAL.PH_TARGET;
-        const src={volumeM3:Math.max(0,Number(srcState.volumeM3)||0), levelMm:Math.max(0,Number(srcState.levelMm)||0), pH:Math.min(14,Math.max(0,Number(srcState.pH)||7))};
+        const safetyFactor=num(options.safetyFactor,1.25)||1.25, pumpExtraM3=num(options.pumpExtraM3,0)||0, targetPh=CAL.PH_TARGET;
+        const src={volumeM3:Math.max(0,num(srcState.volumeM3,0)), levelMm:Math.max(0,num(srcState.levelMm,0)), pH:Math.min(14,Math.max(0,num(srcState.pH,7)))};
         const {species,eq}=calculateEqToNeutralize(src.pH, m3ToL(src.volumeM3), targetPh);
         const mode=options.mode||'chemicals';
         let type='', conc=null, ref=null, eqL=0;
         if(species==='H+'){
-          if(mode==='effluent'){ type='LH'; ref=Number.isFinite(Number(options.referencePh))?Number(options.referencePh):12.5; eqL=calculateEffluentEqPerL(ref,'LH'); }
-          else { type='NaOH'; conc=Number(state.chemicals.naohPct)||30; eqL=naohEqPerL(conc); }
+          if(mode==='effluent'){ type='LH'; ref=Number.isFinite(num(options.referencePh))?num(options.referencePh):12.5; eqL=calculateEffluentEqPerL(ref,'LH'); }
+          else { type='NaOH'; conc=num(state.chemicals.naohPct,30)||30; eqL=naohEqPerL(conc); }
         } else if(species==='OH-'){
-          if(mode==='effluent'){ type='IX'; ref=Number.isFinite(Number(options.referencePh))?Number(options.referencePh):1.5; eqL=calculateEffluentEqPerL(ref,'IX'); }
-          else { type='H2SO4'; conc=Number(state.chemicals.h2so4Pct)||98; eqL=h2so4EqPerL(conc); }
+          if(mode==='effluent'){ type='IX'; ref=Number.isFinite(num(options.referencePh))?num(options.referencePh):1.5; eqL=calculateEffluentEqPerL(ref,'IX'); }
+          else { type='H2SO4'; conc=num(state.chemicals.h2so4Pct,98)||98; eqL=h2so4EqPerL(conc); }
         }
         const requiredVolumeTheoreticalL=(eq>0&&eqL>0)?(eq/eqL):0;
         const safeTheo=Number.isFinite(requiredVolumeTheoreticalL)&&requiredVolumeTheoreticalL>0?requiredVolumeTheoreticalL:0;
@@ -184,7 +184,7 @@
         return {src,mode,species,type,conc,ref,eqL:Math.max(eqL,0),eq:reqLteq(eq),reqL:requiredVolumeFinalL,reqM3:requiredVolumeFinalM3,dMm:m3ToMm(requiredVolumeFinalM3),proj:finalTankLevelMm,
           result:{targetPh,currentPh:src.pH,requiredType:type,requiredConcentration:conc,equivalentsToNeutralize:Math.max(eq,0),reagentEqPerL:Math.max(eqL,0),requiredVolumeTheoreticalL:safeTheo,requiredVolumeFinalL,requiredVolumeFinalM3,pumpExtraM3,finalTankVolumeM3,finalTankLevelMm,finalPh,minimal,hasError}};
       }
-      function reqLteq(v){ return Math.max(Number(v)||0,0); }
+      function reqLteq(v){ return Math.max(num(v,0)||0,0); }
 
       function calc(){
         const isConditioning=state.selectedTask==='Acondicionamiento de la pileta';
@@ -278,14 +278,21 @@
         $('naohPct').addEventListener('change',e=>{state.chemicals.naohPct=Number(e.target.value); renderResults();});
         $('h2so4Pct').addEventListener('change',e=>{state.chemicals.h2so4Pct=Number(e.target.value); renderResults();});
         [$('modeChemBtn'),$('modeEffBtn')].forEach(btn=>btn.addEventListener('click',()=>{state.neutralization.mode=btn.dataset.mode; renderI18n();}));
-        $('neutralizerPh').addEventListener('input',e=>{state.neutralization.referencePh=Number(e.target.value); $('neutralizerPhError').textContent=(state.neutralization.referencePh>=0&&state.neutralization.referencePh<=14)?'':t('invalidNeutralizerPh'); renderResults();});
+        $('neutralizerPh').addEventListener('input',e=>{state.neutralization.referencePh=num(e.target.value); $('neutralizerPhError').textContent=(state.neutralization.referencePh>=0&&state.neutralization.referencePh<=14)?'':t('invalidNeutralizerPh'); renderResults();});
         $('btnHome').addEventListener('click',()=>show('language'));
         $('btnBack').addEventListener('click',()=>{const f=flow();const i=f.indexOf(currentScreen);if(i>0)show(f[i-1]);});
         $('btnNext').addEventListener('click',()=>{const f=flow();const i=f.indexOf(currentScreen);if(!isValid(currentScreen))return;if(i<f.length-1){show(f[i+1]);if(f[i+1]==='results')renderResults();}});
       }
 
       function show(id){ currentScreen=id; ['language','task','state','effluents','results'].forEach(s=>$('screen-'+s).classList.toggle('active',s===id)); $('btnBack').disabled=id==='language'; const hide=id==='language'; $('tabs').style.display=hide?'none':'flex'; $('globalNav').style.display=hide?'none':'flex'; renderTabs(); $('btnNext').disabled=id==='state'?!validateState():false; }
-      function init(){ state.tankState.volumeM3=mmToM3(state.tankState.levelMm); $('tankLevelMm').value=String(state.tankState.levelMm); $('tankPh').value=String(state.tankState.pH); bind(); renderI18n(); show('language'); }
+      function init(){ state.tankState.volumeM3=mmToM3(state.tankState.levelMm); $('tankLevelMm').value=String(state.tankState.levelMm); $('tankPh').value=String(state.tankState.pH); bind(); renderI18n(); show('language'); verifyKnownCases(); }
+
+      function verifyKnownCases(){
+        const c1=calculateNeutralizationForState({volumeM3:mmToM3(2000),levelMm:2000,pH:12.5},{mode:'chemicals',safetyFactor:1.25,pumpExtraM3:2});
+        const c2=calculateNeutralizationForState({volumeM3:mmToM3(3810),levelMm:3810,pH:2.45},{mode:'chemicals',safetyFactor:1.25,pumpExtraM3:2});
+        console.info('check_case_1_H2SO4_L', fmt(c1.result.requiredVolumeFinalL,2));
+        console.info('check_case_2_NaOH_L', fmt(c2.result.requiredVolumeFinalL,2));
+      }
       init();
     </script>
   </body>
