@@ -175,7 +175,7 @@
         const requiredVolumeTheoreticalL=(eq>0&&eqL>0)?(eq/eqL):0;
         const safeTheo=Number.isFinite(requiredVolumeTheoreticalL)&&requiredVolumeTheoreticalL>0?requiredVolumeTheoreticalL:0;
         const minimal=safeTheo<0.5;
-        const requiredVolumeFinalL=minimal?0:(safeTheo*safetyFactor);
+        const requiredVolumeFinalL=safeTheo*safetyFactor;
         const requiredVolumeFinalM3=requiredVolumeFinalL/1000;
         const finalTankVolumeM3=Math.max(0,src.volumeM3+requiredVolumeFinalM3+pumpExtraM3);
         const finalTankLevelMm=Math.max(0,m3ToMm(finalTankVolumeM3));
@@ -233,9 +233,10 @@
             return;
           }
           $('stateSummary').innerHTML=`<div>${t('newTankLevel')}: <b>${fmt(n.result.finalTankLevelMm,2)} mm</b></div><div>${t('newTankPh')}: <b>${fmt(n.result.finalPh,2)}</b></div>`;
-          $('requiredKpi').textContent=n.result.minimal?t('minAdjustment'):`${fmt(n.result.requiredVolumeFinalL,2)} L`;
+          const hasDose=n.result.requiredType && n.result.requiredVolumeFinalL>0;
+          $('requiredKpi').textContent=hasDose?`${fmt(n.result.requiredVolumeFinalL,2)} L`:t('minAdjustment');
           $('conditioningDoseType').textContent=n.result.requiredType||'-';
-          $('conditioningDoseValue').textContent=n.result.minimal?'0.00 L':`${fmt(n.result.requiredVolumeFinalL,2)} L`;
+          $('conditioningDoseValue').textContent=hasDose?`${fmt(n.result.requiredVolumeFinalL,2)} L`:'0.00 L';
           $('overflowWarn').style.display=n.result.finalTankLevelMm>CAL.TANK_MAX_MM?'block':'none';
           $('overflowWarn').textContent=n.result.finalTankLevelMm>CAL.TANK_MAX_MM?t('overflow'):'';
           return;
