@@ -114,62 +114,92 @@
       function isValid(screen){
         if(screen==='task'&&!state.selectedTask){setError(t('errSelectTask'));return false;}
         if(screen==='state'&&!validateState()){setError('');return false;}
-        if(screen==='effluents'){for(const e of state.effluents){if(!(e.volumeM3>=0)&&!(e.pH>=0&&e.pH<=14)){setError(t('errPh'));return false;} if(e.pH<0||e.pH>14){setError(t('errPh'));return false;}}}
+        if(screen==='effluents'){for(const e of state.effluents){const vol=Number(e.volumeM3), ph=Number(e.pH); if(!Number.isFinite(vol)||vol<0||!Number.isFinite(ph)||ph<0||ph>14){setError(t('errPh'));return false;}}}
         setError(''); return true;
       }
       function show(id){ currentScreen=id; ['language','task','state','effluents','results'].forEach(s=>$('screen-'+s).classList.toggle('active',s===id)); $('btnBack').disabled=id==='language'; const hide=id==='language'; $('tabs').style.display=hide?'none':'flex'; $('globalNav').style.display=hide?'none':'flex'; renderTabs(); $('btnNext').disabled=id==='state'?!validateState():false; }
 
       function renderEffluents(){
         const names=['LH','BPED','IX','LS'];
-        $('effluentList').innerHTML=state.effluents.map((e,i)=>`<div class="effluent-item"><div class="grid grid-3"><div class="field"><label>${t('effluentName')} ${i+1}</label><select data-ix="${i}" data-f="name">${names.map(n=>`<option value="${n}" ${e.name===n?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>${t('effVol')}</label><input data-ix="${i}" data-f="volumeM3" type="number" min="0" step="0.01" placeholder=">= 0" value="${e.volumeM3}" /></div><div class="field"><label>${t('effPh')}</label><input data-ix="${i}" data-f="pH" type="number" min="0" max="14" step="0.01" placeholder="0 - 14" value="${e.pH}" /></div></div><div class="notice">${t('effTypeAuto')}: <b>${t(effluentKind(Number(e.pH)||7))}</b>${i>0?` &nbsp; <button class='btn' data-remove='${i}' type='button'>-</button>`:''}</div></div>`).join('');
-        $('effluentList').querySelectorAll('[data-f]').forEach(el=>el.addEventListener('input',e=>{ const ix=Number(e.target.dataset.ix), f=e.target.dataset.f; state.effluents[ix][f]=f==='name'?e.target.value:Number(e.target.value)||0; renderEffluents(); renderResults(); }));
+        $('effluentList').innerHTML=state.effluents.map((e,i)=>`<div class="effluent-item"><div class="grid grid-3"><div class="field"><label>${t('effluentName')} ${i+1}</label><select data-ix="${i}" data-f="name">${names.map(n=>`<option value="${n}" ${e.name===n?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>${t('effVol')}</label><input data-ix="${i}" data-f="volumeM3" type="number" min="0" step="0.01" placeholder=">= 0" value="${Number.isFinite(Number(e.volumeM3))?e.volumeM3:''}" /></div><div class="field"><label>${t('effPh')}</label><input data-ix="${i}" data-f="pH" type="number" min="0" max="14" step="0.01" placeholder="0 - 14" value="${Number.isFinite(Number(e.pH))?e.pH:''}" /></div></div><div class="notice">${t('effTypeAuto')}: <b class="eff-kind" data-kind-ix="${i}">${t(effluentKind(Number(e.pH)||7))}</b>${i>0?` &nbsp; <button class='btn' data-remove='${i}' type='button'>-</button>`:''}</div></div>`).join('');
+
+        $('effluentList').querySelectorAll('select[data-f="name"]').forEach(el=>el.addEventListener('change',e=>{const ix=Number(e.target.dataset.ix); state.effluents[ix].name=e.target.value; renderResults();}));
+        $('effluentList').querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{
+          const ix=Number(e.target.dataset.ix), f=e.target.dataset.f, raw=e.target.value;
+          state.effluents[ix][f]=raw===''?NaN:Number(raw);
+          if(f==='pH'){ const kindEl=$('effluentList').querySelector(`[data-kind-ix="${ix}"]`); if(kindEl) kindEl.textContent=t(effluentKind(Number(state.effluents[ix].pH)||7)); }
+          renderResults();
+        }));
         $('effluentList').querySelectorAll('[data-remove]').forEach(el=>el.addEventListener('click',()=>{ state.effluents.splice(Number(el.dataset.remove),1); renderEffluents(); renderResults(); }));
       }
 
-      function mix(){ let totalM3=state.tankState.volumeM3,totalH=state.tankState.pH<7?hFromPh(state.tankState.pH)*m3ToL(state.tankState.volumeM3):0,totalOH=state.tankState.pH>7?ohFromPh(state.tankState.pH)*m3ToL(state.tankState.volumeM3):0; state.effluents.forEach(e=>{totalM3+=e.volumeM3; const l=m3ToL(e.volumeM3); if((Number(e.pH)||7)<7) totalH+=hFromPh(e.pH)*l; else if((Number(e.pH)||7)>7) totalOH+=ohFromPh(e.pH)*l;}); const totalL=m3ToL(totalM3); let ph=7; if(totalL>0){ if(totalH>totalOH) ph=-Math.log10(Math.max((totalH-totalOH)/totalL,1e-14)); else if(totalOH>totalH) ph=14+Math.log10(Math.max((totalOH-totalH)/totalL,1e-14)); } return {volumeM3:totalM3,levelMm:state.tankState.levelMm+m3ToMm(totalM3-state.tankState.volumeM3),pH:Math.min(14,Math.max(0,ph))}; }
+      function calculateEqToNeutralize(ph, volumeL, targetPh=7){
+        const p=Math.min(14,Math.max(0,Number(ph)||0)), target=Math.pow(10,-targetPh);
+        if(p<targetPh) return {species:'H+', eq:Math.max((hFromPh(p)-target)*volumeL,0)};
+        if(p>targetPh) return {species:'OH-', eq:Math.max((ohFromPh(p)-target)*volumeL,0)};
+        return {species:'', eq:0};
+      }
+      function calculateEffluentEqPerL(ph, kind){ return kind==='LH'?ohFromPh(ph):hFromPh(ph); }
+
+      function mixStreams(baseTank, effluents){
+        let totalM3=Math.max(0,Number(baseTank.volumeM3)||0), totalH=0, totalOH=0;
+        const baseL=m3ToL(totalM3), basePh=Math.min(14,Math.max(0,Number(baseTank.pH)||7));
+        if(basePh<7) totalH+=hFromPh(basePh)*baseL; else if(basePh>7) totalOH+=ohFromPh(basePh)*baseL;
+        effluents.forEach(e=>{
+          const vm3=Math.max(0,Number(e.volumeM3)||0), eph=Math.min(14,Math.max(0,Number(e.pH)||7)), l=m3ToL(vm3);
+          totalM3+=vm3;
+          if(eph<7) totalH+=hFromPh(eph)*l; else if(eph>7) totalOH+=ohFromPh(eph)*l;
+        });
+        const totalL=m3ToL(totalM3);
+        let ph=7;
+        if(totalL>0){
+          if(totalH>totalOH) ph=-Math.log10(Math.max((totalH-totalOH)/totalL,1e-14));
+          else if(totalOH>totalH) ph=14+Math.log10(Math.max((totalOH-totalH)/totalL,1e-14));
+        }
+        return {volumeM3:totalM3, levelMm:(Number(baseTank.levelMm)||0)+m3ToMm(totalM3-(Number(baseTank.volumeM3)||0)), pH:Math.min(14,Math.max(0,ph))};
+      }
+
+      function calculateNeutralizationForState(srcState, options={}){
+        const safetyFactor=Number(options.safetyFactor)||1.25, pumpExtraM3=Number(options.pumpExtraM3)||0, targetPh=CAL.PH_TARGET;
+        const src={volumeM3:Math.max(0,Number(srcState.volumeM3)||0), levelMm:Math.max(0,Number(srcState.levelMm)||0), pH:Math.min(14,Math.max(0,Number(srcState.pH)||7))};
+        const {species,eq}=calculateEqToNeutralize(src.pH, m3ToL(src.volumeM3), targetPh);
+        const mode=options.mode||'chemicals';
+        let type='', conc=null, ref=null, eqL=0;
+        if(species==='H+'){
+          if(mode==='effluent'){ type='LH'; ref=Number.isFinite(Number(options.referencePh))?Number(options.referencePh):12.5; eqL=calculateEffluentEqPerL(ref,'LH'); }
+          else { type='NaOH'; conc=Number(state.chemicals.naohPct)||30; eqL=naohEqPerL(conc); }
+        } else if(species==='OH-'){
+          if(mode==='effluent'){ type='IX'; ref=Number.isFinite(Number(options.referencePh))?Number(options.referencePh):1.5; eqL=calculateEffluentEqPerL(ref,'IX'); }
+          else { type='H2SO4'; conc=Number(state.chemicals.h2so4Pct)||98; eqL=h2so4EqPerL(conc); }
+        }
+        const requiredVolumeTheoreticalL=(eq>0&&eqL>0)?(eq/eqL):0;
+        const safeTheo=Number.isFinite(requiredVolumeTheoreticalL)&&requiredVolumeTheoreticalL>0?requiredVolumeTheoreticalL:0;
+        const minimal=safeTheo<0.5;
+        const requiredVolumeFinalL=minimal?0:(safeTheo*safetyFactor);
+        const requiredVolumeFinalM3=requiredVolumeFinalL/1000;
+        const finalTankVolumeM3=Math.max(0,src.volumeM3+requiredVolumeFinalM3+pumpExtraM3);
+        const finalTankLevelMm=Math.max(0,m3ToMm(finalTankVolumeM3));
+        const finalPh=(species&&requiredVolumeFinalL>0)?targetPh:src.pH;
+        const hasError=![src.volumeM3,src.levelMm,eq,eqL,requiredVolumeFinalL,finalTankVolumeM3,finalTankLevelMm].every(v=>Number.isFinite(v));
+        return {src,mode,species,type,conc,ref,eqL:Math.max(eqL,0),eq:reqLteq(eq),reqL:requiredVolumeFinalL,reqM3:requiredVolumeFinalM3,dMm:m3ToMm(requiredVolumeFinalM3),proj:finalTankLevelMm,
+          result:{targetPh,currentPh:src.pH,requiredType:type,requiredConcentration:conc,equivalentsToNeutralize:Math.max(eq,0),reagentEqPerL:Math.max(eqL,0),requiredVolumeTheoreticalL:safeTheo,requiredVolumeFinalL,requiredVolumeFinalM3,pumpExtraM3,finalTankVolumeM3,finalTankLevelMm,finalPh,minimal,hasError}};
+      }
+      function reqLteq(v){ return Math.max(Number(v)||0,0); }
 
       function calc(){
         const isConditioning=state.selectedTask==='Acondicionamiento de la pileta';
         if(isConditioning){
-          const src={volumeM3:Math.max(0,mmToM3(state.tankState.levelMm)),levelMm:Math.max(0,Number(state.tankState.levelMm)||0),pH:Math.min(14,Math.max(0,Number(state.tankState.pH)||7))};
-          const volumeL=m3ToL(src.volumeM3), hTarget=Math.pow(10,-CAL.PH_TARGET), ohTarget=Math.pow(10,-(14-CAL.PH_TARGET));
-          let requiredType='', requiredConcentration=null, species='', reagentEqPerL=0, equivalentsToNeutralize=0;
-          if(src.pH<7){
-            species='H+';
-            requiredType='NaOH';
-            requiredConcentration=Number(state.chemicals.naohPct)||30;
-            equivalentsToNeutralize=Math.max((hFromPh(src.pH)-hTarget)*volumeL,0);
-            reagentEqPerL=Math.max(naohEqPerL(requiredConcentration),0);
-          } else if(src.pH>7){
-            species='OH-';
-            requiredType='H2SO4';
-            requiredConcentration=Number(state.chemicals.h2so4Pct)||98;
-            equivalentsToNeutralize=Math.max((ohFromPh(src.pH)-ohTarget)*volumeL,0);
-            reagentEqPerL=Math.max(h2so4EqPerL(requiredConcentration),0);
-          }
-          const requiredVolumeTheoreticalL=(reagentEqPerL>0)?(equivalentsToNeutralize/reagentEqPerL):0;
-          const safeTheo=Number.isFinite(requiredVolumeTheoreticalL)&&requiredVolumeTheoreticalL>0?requiredVolumeTheoreticalL:0;
-          const minimal=(Math.abs(src.pH-7)<1e-6)||safeTheo<0.5;
-          const requiredVolumeFinalL=minimal?0:(safeTheo*1.25);
-          const requiredVolumeFinalM3=requiredVolumeFinalL/1000;
-          const pumpExtraM3=2;
-          const finalTankVolumeM3=Math.max(0,src.volumeM3+requiredVolumeFinalM3+pumpExtraM3);
-          const finalTankLevelMm=Math.max(0,finalTankVolumeM3*CAL.MM_PER_M3);
-          const finalPh=7;
-          const hasError=![src.volumeM3,reagentEqPerL,equivalentsToNeutralize,requiredVolumeFinalL,finalTankVolumeM3,finalTankLevelMm].every(v=>Number.isFinite(v));
-          const result={targetPh:7,currentPh:src.pH,requiredType,requiredConcentration,equivalentsToNeutralize,reagentEqPerL,requiredVolumeTheoreticalL:safeTheo,requiredVolumeFinalL,requiredVolumeFinalM3,pumpExtraM3,finalTankVolumeM3,finalTankLevelMm,finalPh,minimal,hasError};
-          state.neutralization={...state.neutralization,...result};
-          return {isConditioning,src,mode:'chemicals',species,type:requiredType,conc:requiredConcentration,eqL:reagentEqPerL,eq:equivalentsToNeutralize,reqL:requiredVolumeFinalL,reqM3:requiredVolumeFinalM3,proj:finalTankLevelMm,result};
+          const src={volumeM3:mmToM3(state.tankState.levelMm),levelMm:state.tankState.levelMm,pH:state.tankState.pH};
+          const n=calculateNeutralizationForState(src,{mode:'chemicals',safetyFactor:1.25,pumpExtraM3:2});
+          state.neutralization={...state.neutralization,...n.result};
+          return n;
         }
-        const src=state.selectedTask==='Recepción de Efluentes'?mix():{volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH};
-        const mode=state.selectedTask==='Acondicionamiento de la pileta'?'chemicals':state.neutralization.mode;
-        let eq=0,species='',type='',conc=null,ref=null,eqL=0;
-        if(Math.abs(src.pH-7)>=.15){
-          if(src.pH<7){eq=hFromPh(src.pH)*m3ToL(src.volumeM3);species='H+'; if(mode==='effluent'){type='LH';ref=state.neutralization.referencePh??12.5;eqL=ohFromPh(ref);} else {type='NaOH';conc=state.chemicals.naohPct;eqL=naohEqPerL(conc);} }
-          else {eq=ohFromPh(src.pH)*m3ToL(src.volumeM3);species='OH-'; if(mode==='effluent'){type='IX';ref=state.neutralization.referencePh??1.5;eqL=hFromPh(ref);} else {type='H2SO4';conc=state.chemicals.h2so4Pct;eqL=h2so4EqPerL(conc);} }
-        }
-        const reqL=eqL>0?eq/eqL:0, reqM3=reqL/1000, dMm=m3ToMm(reqM3);
-        return {isConditioning:false,src,mode,species,type,conc,ref,eqL,eq,reqL,reqM3,dMm,proj:src.levelMm+dMm};
+        const mixed=state.selectedTask==='Recepción de Efluentes'?
+          mixStreams({volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH},state.effluents):
+          {volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH};
+        const n=calculateNeutralizationForState(mixed,{mode:state.neutralization.mode,safetyFactor:1.25,pumpExtraM3:0,referencePh:state.neutralization.referencePh});
+        state.neutralization={...state.neutralization,...n.result};
+        return n;
       }
 
       function renderResults(){
