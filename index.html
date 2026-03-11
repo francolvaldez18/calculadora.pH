@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calculadora pH</title>
     <style>
-      :root { --overlay-color: rgba(255,255,255,.76); --panel-color: rgba(255,255,255,.88); --text-primary:#093a63; --text-secondary:#325f83; --button-bg:#0d6eaa; --button-bg-hover:#1285cb; --border:rgba(73,119,153,.25); --danger:#b8302d; --warning:#9b6200; }
+      :root { --overlay-color: rgba(255,255,255,.76); --panel-color: rgba(255,255,255,.88); --text-primary:#093a63; --text-secondary:#325f83; --button-bg:#0d6eaa; --button-bg-hover:#1285cb; --border:rgba(73,119,153,.25); --danger:#b8302d; --warning:#9b6200; --font-bump:2px; }
       *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:"Segoe UI","Roboto",Arial,sans-serif;color:var(--text-primary);background:#e9edf2}
       .app-screen{position:relative;min-height:100vh;display:grid;place-items:center;padding:7.2rem 1.25rem 1.8rem;overflow:hidden}
       .background-image{position:absolute;inset:0;z-index:-3;background:radial-gradient(circle at 20% 20%, rgba(13,110,170,.12), transparent 35%),radial-gradient(circle at 80% 40%, rgba(13,110,170,.08), transparent 38%),linear-gradient(180deg,#f5f7fa 0%,#e8edf3 100%)}
@@ -13,16 +13,16 @@
       .overlay{position:absolute;inset:0;background:var(--overlay-color);z-index:-1}
       .top-logo{position:absolute;top:.6rem;left:50%;transform:translateX(-50%);width:min(210px,46vw);max-height:74px;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 4px 8px rgba(5,43,72,.12));z-index:2;pointer-events:none}
       .content{position:relative;z-index:1;width:min(1040px,100%);background:var(--panel-color);border:1px solid var(--border);border-radius:20px;padding:clamp(1rem,2.8vw,1.8rem);box-shadow:0 18px 35px rgba(9,58,99,.12)}
-      .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.tab{border:1px solid rgba(13,110,170,.25);padding:7px 11px;border-radius:999px;font-size:.84rem;color:var(--text-secondary);font-weight:600;background:rgba(255,255,255,.75)}.tab.active{color:var(--button-bg);background:rgba(13,110,170,.13);border-color:rgba(13,110,170,.42)}
-      .screen{display:none}.screen.active{display:block} h3{margin:0 0 10px;font-size:1.04rem}
+      .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.tab{border:1px solid rgba(13,110,170,.25);padding:7px 11px;border-radius:999px;font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary);font-weight:600;background:rgba(255,255,255,.75)}.tab.active{color:var(--button-bg);background:rgba(13,110,170,.13);border-color:rgba(13,110,170,.42)}
+      .screen{display:none}.screen.active{display:block} h3{margin:0 0 10px;font-size:calc(1.04rem + var(--font-bump))}
       .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-      .field{display:flex;flex-direction:column;gap:5px} label{font-size:.84rem;color:var(--text-secondary);font-weight:600}
+      .field{display:flex;flex-direction:column;gap:5px} label{font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary);font-weight:600}
       input,select{border:1px solid rgba(73,119,153,.28);border-radius:10px;padding:9px 10px;background:#fff;color:var(--text-primary);width:100%}
-      .input-invalid{border:2px solid var(--danger);background:#fff7f7}.btn{border:none;border-radius:12px;padding:.8rem 1rem;font-size:.96rem;font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));cursor:pointer;box-shadow:0 8px 16px rgba(9,58,99,.2)}.btn:disabled{opacity:.55;cursor:not-allowed}
+      .input-invalid{border:2px solid var(--danger);background:#fff7f7}.btn{border:none;border-radius:12px;padding:.8rem 1rem;font-size:calc(.96rem + var(--font-bump));font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));cursor:pointer;box-shadow:0 8px 16px rgba(9,58,99,.2)}.btn:disabled{opacity:.55;cursor:not-allowed}
       .choice-buttons{display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:.8rem}.choice-button{border:2px solid #0d6eaa;border-radius:12px;padding:.9rem 1rem;font-size:clamp(1.02rem,1.8vw,1.12rem);font-weight:800;color:#0d6eaa;background:#fff;box-shadow:0 8px 16px rgba(9,58,99,.2);cursor:pointer}.choice-button.active{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff}
-      .card{border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.84);padding:11px}.card h4{margin:0 0 6px;font-size:.9rem;color:var(--button-bg)}.dose-card{text-align:center;margin-top:10px}.dose-type{font-size:1.05rem;font-weight:700;color:var(--text-secondary)}.dose-value{font-size:2.35rem;font-weight:800;color:var(--button-bg);line-height:1.2}
-      .kpi{margin-top:10px;border:1px solid rgba(13,110,170,.35);border-radius:12px;background:rgba(13,110,170,.1);padding:12px}.kpi-label{font-size:.84rem;color:var(--text-secondary)}.kpi-value{font-size:1.8rem;font-weight:800;color:var(--button-bg)}
-      .notice{margin-top:8px;font-size:.88rem;color:var(--text-secondary)}.error{margin-top:6px;font-size:.85rem;color:var(--danger)}.warn{color:var(--warning);font-weight:700}
+      .card{border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.84);padding:11px}.card h4{margin:0 0 6px;font-size:calc(.9rem + var(--font-bump));color:var(--button-bg)}.dose-card{text-align:center;margin-top:10px}.dose-type{font-size:calc(1.05rem + var(--font-bump));font-weight:700;color:var(--text-secondary)}.dose-value{font-size:2.35rem;font-weight:800;color:var(--button-bg);line-height:1.2}
+      .kpi{margin-top:10px;border:1px solid rgba(13,110,170,.35);border-radius:12px;background:rgba(13,110,170,.1);padding:12px}.kpi-label{font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary)}.kpi-value{font-size:1.8rem;font-weight:800;color:var(--button-bg)}
+      .notice{margin-top:8px;font-size:calc(.88rem + var(--font-bump));color:var(--text-secondary)}.error{margin-top:6px;font-size:calc(.85rem + var(--font-bump));color:var(--danger)}.warn{color:var(--warning);font-weight:700}
       .welcome-main{text-align:center;padding:clamp(.6rem,1.5vw,1rem) 0}.welcome-main h2{margin:0;font-size:clamp(1.35rem,2.5vw,2.15rem);line-height:1.35}.welcome-description{margin:1rem auto 0;max-width:70ch;color:var(--text-secondary);font-size:clamp(.95rem,1.4vw,1.1rem);line-height:1.55}.language-label{margin-top:1.8rem;margin-bottom:1rem;font-weight:600;color:#174e78;font-size:clamp(1rem,1.8vw,1.2rem)}
       .language-buttons{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:.9rem}.language-button{border:2px solid #0d6eaa;border-radius:12px;padding:.95rem 1rem;font-size:clamp(1.08rem,2.2vw,1.2rem);font-weight:800;color:#0d6eaa;background:#fff;box-shadow:0 8px 16px rgba(9,58,99,.2);cursor:pointer}.language-button.active{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff}
       .welcome-actions{margin-top:1.1rem;display:flex;justify-content:center}.welcome-next{min-width:min(280px,100%)} .top-row{display:flex;justify-content:space-between;align-items:center;gap:10px}.settings-panel{display:none;margin-top:10px}.settings-panel.open{display:block}
@@ -36,7 +36,7 @@
       <div class="background-image" aria-hidden="true"></div>
       <div class="background-logo" aria-hidden="true"></div>
       <div class="overlay" aria-hidden="true"></div>
-      <img class="top-logo" alt="Logo POSCO" src="POSCO_logo.svg" onerror="this.onerror=null;this.src='PoscoArg.png';" />
+      <img class="top-logo" alt="Logo POSCO" src="http://www.poscoargentina.com/public/images/xlogo-posco-argentina-1.png.pagespeed.ic.HsKLPImI1W.webp" onerror="this.onerror=null;this.src='POSCO_logo.svg';" />
       <section class="content">
         <div class="tabs" id="tabs"></div>
 
