@@ -11,7 +11,9 @@
       .background-image{position:absolute;inset:0;z-index:-3;background:radial-gradient(circle at 20% 20%, rgba(13,110,170,.12), transparent 35%),radial-gradient(circle at 80% 40%, rgba(13,110,170,.08), transparent 38%),linear-gradient(180deg,#f5f7fa 0%,#e8edf3 100%)}
       .background-logo{position:absolute;inset:0;z-index:-2;opacity:.12;background:none}
       .overlay{position:absolute;inset:0;background:var(--overlay-color);z-index:-1}
-      .top-logo{position:relative;width:min(210px,46vw);max-height:74px;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 4px 8px rgba(5,43,72,.12));z-index:2;pointer-events:none;margin:0 0 1cm}
+      .top-logo{position:relative;width:min(210px,46vw);max-height:74px;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 4px 8px rgba(5,43,72,.12));z-index:2;pointer-events:none;margin:0 0 .3rem}
+      .flags-row{display:flex;align-items:center;justify-content:center;gap:1cm;margin:0 0 1cm;position:relative;z-index:2}
+      .flag-img{width:min(105px,23vw);height:auto;border-radius:4px;border:1px solid rgba(73,119,153,.25);box-shadow:0 3px 8px rgba(9,58,99,.12)}
       .content{position:relative;z-index:1;width:min(1040px,100%);background:var(--panel-color);border:1px solid var(--border);border-radius:20px;padding:clamp(1rem,2.8vw,1.8rem);box-shadow:0 18px 35px rgba(9,58,99,.12)}
       .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.tab{border:1px solid rgba(13,110,170,.25);padding:7px 11px;border-radius:999px;font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary);font-weight:600;background:rgba(255,255,255,.75)}.tab.active{color:var(--button-bg);background:rgba(13,110,170,.13);border-color:rgba(13,110,170,.42)}
       .screen{display:none}.screen.active{display:block} h3{margin:0 0 10px;font-size:calc(1.04rem + var(--font-bump))}
@@ -36,7 +38,7 @@
       .dev-dialog h4{margin:0 0 .6rem;color:var(--button-bg);font-size:calc(1rem + var(--font-bump))}
       .dev-dialog p{margin:.2rem 0;color:var(--text-primary);font-size:calc(.9rem + var(--font-bump));line-height:1.45}
       .dev-actions{display:flex;justify-content:flex-end;margin-top:.8rem}
-      @media (max-width:860px){.grid,.grid-3,.cards,.choice-buttons,.language-buttons{grid-template-columns:1fr}.app-screen{justify-content:center;padding-top:1rem}.top-logo{margin-bottom:1cm;width:min(200px,58vw)}}
+      @media (max-width:860px){.grid,.grid-3,.cards,.choice-buttons,.language-buttons{grid-template-columns:1fr}.app-screen{justify-content:center;padding-top:1rem}.top-logo{margin-bottom:.3rem;width:min(200px,58vw)}.flags-row{gap:1cm;margin-bottom:1cm}.flag-img{width:min(95px,30vw)}}
     </style>
   </head>
   <body>
@@ -45,6 +47,10 @@
       <div class="background-logo" aria-hidden="true"></div>
       <div class="overlay" aria-hidden="true"></div>
       <img class="top-logo" alt="Logo POSCO" src="http://www.poscoargentina.com/public/images/xlogo-posco-argentina-1.png.pagespeed.ic.HsKLPImI1W.webp" onerror="this.onerror=null;this.src='POSCO_logo.svg';" />
+      <div class="flags-row" aria-hidden="true">
+        <img class="flag-img" alt="Bandera de Corea del Sur" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Flag_of_South_Korea.svg/960px-Flag_of_South_Korea.svg.png" />
+        <img class="flag-img" alt="Bandera de Argentina" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/960px-Flag_of_Argentina.svg.png" />
+      </div>
       <section class="content">
         <div class="tabs" id="tabs"></div>
 
@@ -93,7 +99,7 @@
       <div class="dev-dialog">
         <h4 id="devTitle" data-i18n="developerBtn"></h4>
         <p><strong>Valdez Franco Leonardo</strong></p>
-        <p>Posco LH Production Dept. - Utilities</p>
+        <p>POSCO LH Production Dept. - Utilities - Güemes - Salta - Argentina</p>
         <p>LinkedIn: <a href="https://www.linkedin.com/in/francolvaldez/" target="_blank" rel="noopener noreferrer">https://www.linkedin.com/in/francolvaldez/</a></p>
         <div class="dev-actions"><button class="btn" id="devCloseBtn" type="button" data-i18n="closeBtn"></button></div>
       </div>
