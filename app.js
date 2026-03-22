@@ -16,9 +16,13 @@ const CONTAMINANTS = [
 ];
 
 const MULTIPLE_KEYS = ['Ba', 'Al', 'P', 'Fe', 'Ni', 'Cu', 'Zn', 'Pb', 'Cr', 'Mn', 'Co', 'B', 'Cd'];
-const AUTO_ORDER_WITH_LI = ['Ba', 'Al', 'P', 'Fe', 'Ni', 'Cu', 'Zn', 'Pb', 'Cr', 'Mn', 'Co', 'Li', 'B', 'Cd'];
-const AUTO_ORDER_WITHOUT_LI = ['Ba', 'Al', 'P', 'Fe', 'Ni', 'Cu', 'Zn', 'Pb', 'Cr', 'Mn', 'Co', 'B', 'Cd'];
-const STORAGE_KEY = 'concentration-calculator-settings-v2';
+const DEFAULT_AUTO_ORDER = ['Ba', 'Al', 'P', 'Fe', 'Ni', 'Cu', 'Zn', 'Pb', 'Cr', 'Mn', 'Co', 'Li', 'B', 'Cd'];
+const STORAGE_KEY = 'concentration-calculator-settings-v3';
+const EXCEL_SOURCE_STATUS = {
+  available: false,
+  message:
+    'No se encontraron los Excel de referencia en el repositorio ni en los recursos del entorno; se aplica la lógica base del prompt y la app queda preparada para ajustar reglas cuando esos archivos estén disponibles.',
+};
 
 const TEXTS = {
   es: {
@@ -30,7 +34,9 @@ const defaultSettings = {
   locale: 'es',
   safetyFactor: 1.25,
   operationMode: 'real',
+  warningThresholdRatio: 0.9,
   contaminantOrder: CONTAMINANTS.map((item) => item.key),
+  automaticOrder: [...DEFAULT_AUTO_ORDER],
   coolingComposition: Object.fromEntries(CONTAMINANTS.map((item) => [item.key, 0])),
   limits: Object.fromEntries(CONTAMINANTS.map((item) => [item.key, item.regulatoryLimit])),
 };
@@ -74,6 +80,7 @@ const elements = {
   resultsCards: document.getElementById('results-cards'),
   settingsSafetyFactor: document.getElementById('settings-safety-factor'),
   settingsOperationMode: document.getElementById('settings-operation-mode'),
+  settingsWarningThreshold: document.getElementById('settings-warning-threshold'),
   settingsOrderReadout: document.getElementById('settings-order-readout'),
   settingsOrderList: document.getElementById('settings-order-list'),
   settingsLimitsGrid: document.getElementById('settings-limits-grid'),
@@ -103,7 +110,9 @@ function loadSettings() {
       locale: saved.locale ?? defaultSettings.locale,
       safetyFactor: saved.safetyFactor ?? defaultSettings.safetyFactor,
       operationMode: saved.operationMode ?? defaultSettings.operationMode,
+      warningThresholdRatio: saved.warningThresholdRatio ?? defaultSettings.warningThresholdRatio,
       contaminantOrder: Array.isArray(saved.contaminantOrder) ? saved.contaminantOrder : [...defaultSettings.contaminantOrder],
+      automaticOrder: Array.isArray(saved.automaticOrder) ? saved.automaticOrder : [...defaultSettings.automaticOrder],
       coolingComposition: { ...defaultSettings.coolingComposition, ...(saved.coolingComposition || {}) },
       limits: { ...defaultSettings.limits, ...(saved.limits || {}) },
     };
@@ -118,12 +127,6 @@ function clone(value) {
 
 function saveSettings() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
-}
-
-function t(path) {
-  const [group, index] = path.split('.');
-  if (index !== undefined) return TEXTS[state.settings.locale][group][Number(index)];
-  return path;
 }
 
 function bindEvents() {
@@ -155,7 +158,7 @@ function bindEvents() {
 
   elements.autoInputText.addEventListener('input', (event) => {
     state.autoInput = event.target.value;
-    parseAutomaticInput(true);
+    applyAutomaticInput();
     render();
   });
 
@@ -182,6 +185,12 @@ function bindEvents() {
 
   elements.settingsOperationMode.addEventListener('change', (event) => {
     state.settings.operationMode = event.target.value;
+    saveSettings();
+    render();
+  });
+
+  elements.settingsWarningThreshold.addEventListener('input', (event) => {
+    state.settings.warningThresholdRatio = clamp(sanitizeNumber(event.target.value, defaultSettings.warningThresholdRatio), 0.5, 1);
     saveSettings();
     render();
   });
@@ -276,6 +285,10 @@ function getVisibleContaminants() {
   return ordered.filter((item) => MULTIPLE_KEYS.includes(item.key));
 }
 
+function getAutomaticOrder() {
+  return state.settings.automaticOrder.filter((key) => CONTAMINANTS.some((item) => item.key === key));
+}
+
 function populateSingleSelect() {
   elements.singleSelect.innerHTML = state.settings.contaminantOrder
     .map((key) => `<option value="${key}">${key}</option>`)
@@ -287,68 +300,86 @@ function renderSummary() {
   const visibleCount = getVisibleContaminants().length;
   const modeLabel = state.calculationMode === 'single' ? 'Único' : state.calculationMode === 'multiple' ? 'Múltiple' : 'IBC';
   const inputLabel = state.inputMode === 'manual' ? 'Manual' : 'Automático';
+  const incomingVolume = getIncomingVolume();
 
   elements.summaryChips.innerHTML = [
     metricChip('Modo', modeLabel),
     metricChip('Carga', inputLabel),
     metricChip('Factor', `${formatNumber(state.settings.safetyFactor)}x`),
     metricChip('Parámetros', String(visibleCount)),
+    metricChip('V ingreso', `${formatNumber(incomingVolume)} m³`),
   ].join('');
 
   elements.factorReadout.textContent =
     state.settings.operationMode === 'real'
-      ? `Modo real · C corregida = C × ${formatNumber(state.settings.safetyFactor)}`
-      : 'Modo teórico · sin corrección por factor de seguridad';
+      ? `Modo real · la concentración de ingreso se corrige con FS (${formatNumber(state.settings.safetyFactor)}).`
+      : 'Modo teórico · se usa la concentración de ingreso sin corrección.';
 
-  elements.coolingModeReadout.textContent = 'La composición del cooling water se toma desde Settings.';
+  elements.coolingModeReadout.textContent = `Cooling water como etapa final adicional. ${EXCEL_SOURCE_STATUS.message}`;
 }
 
 function renderAutoPanel() {
   elements.autoInputPanel.classList.toggle('hidden', state.inputMode !== 'automatic');
   if (state.inputMode !== 'automatic') return;
 
-  const parsed = parseAutomaticInput(false);
+  const parsed = parseAutomaticLine(state.autoInput, getAutomaticOrder());
   if (!state.autoInput.trim()) {
-    elements.autoPreview.innerHTML = '<div class="notice">Pegá una línea para ver la vista previa antes del cálculo.</div>';
+    elements.autoPreview.innerHTML = '<div class="notice">Pegá una línea para ver la asignación de contaminantes antes del cálculo.</div>';
     return;
   }
 
-  if (!parsed.orderUsed.length) {
-    elements.autoPreview.innerHTML = '<div class="error">La línea debe contener 13 valores sin Li o 14 valores con Li, todos no negativos.</div>';
+  if (!parsed.valid) {
+    elements.autoPreview.innerHTML = `<div class="error">${parsed.error}</div>`;
     return;
   }
 
-  elements.autoPreview.innerHTML = parsed.orderUsed
-    .map(({ key, value }) => `<div class="card"><strong>${key}</strong><div class="readonly-output">${formatNumber(value)} mg/L</div></div>`)
+  elements.autoPreview.innerHTML = parsed.assignments
+    .map(
+      ({ key, value }) =>
+        `<div class="card"><strong>${key}</strong><div class="readonly-output">${formatNumber(value)} mg/L</div></div>`,
+    )
     .join('');
 }
 
-function parseAutomaticInput(commitValues) {
-  const raw = state.autoInput.trim();
-  if (!raw) return { values: [], orderUsed: [] };
+function parseAutomaticLine(rawInput, fullOrder) {
+  const raw = rawInput.trim();
+  if (!raw) return { valid: false, error: '', assignments: [] };
 
   const values = raw.split(/[\s,;]+/).filter(Boolean).map(Number);
-  if (values.some((value) => Number.isNaN(value) || value < 0)) return { values, orderUsed: [] };
-
-  let orderUsed = [];
-  if (values.length === AUTO_ORDER_WITH_LI.length) {
-    orderUsed = AUTO_ORDER_WITH_LI.map((key, index) => ({ key, value: values[index] }));
-  } else if (values.length === AUTO_ORDER_WITHOUT_LI.length) {
-    orderUsed = AUTO_ORDER_WITHOUT_LI.map((key, index) => ({ key, value: values[index] }));
-  } else {
-    return { values, orderUsed: [] };
+  if (values.some((value) => Number.isNaN(value) || value < 0)) {
+    return { valid: false, error: 'La línea contiene valores inválidos o negativos.', assignments: [] };
   }
 
-  if (commitValues) {
-    CONTAMINANTS.forEach((item) => {
-      state.incomingConcentrations[item.key] = 0;
-    });
-    orderUsed.forEach(({ key, value }) => {
-      state.incomingConcentrations[key] = value;
-    });
+  const orderWithoutLi = fullOrder.filter((key) => key !== 'Li');
+  let chosenOrder = null;
+  if (values.length === fullOrder.length) chosenOrder = fullOrder;
+  if (values.length === orderWithoutLi.length) chosenOrder = orderWithoutLi;
+  if (!chosenOrder) {
+    return {
+      valid: false,
+      error: `La línea debe tener ${orderWithoutLi.length} valores sin Li o ${fullOrder.length} valores con Li según el orden configurado.`,
+      assignments: [],
+    };
   }
 
-  return { values, orderUsed };
+  return {
+    valid: true,
+    error: '',
+    assignments: chosenOrder.map((key, index) => ({ key, value: values[index] ?? 0 })),
+  };
+}
+
+function applyAutomaticInput() {
+  const parsed = parseAutomaticLine(state.autoInput, getAutomaticOrder());
+  if (!parsed.valid) return parsed;
+
+  CONTAMINANTS.forEach((item) => {
+    state.incomingConcentrations[item.key] = 0;
+  });
+  parsed.assignments.forEach(({ key, value }) => {
+    state.incomingConcentrations[key] = value;
+  });
+  return parsed;
 }
 
 function renderInputs() {
@@ -360,12 +391,12 @@ function renderInputs() {
   bindConcentrationInputs(elements.incomingContainer, 'incoming');
 
   elements.initialVolume.value = String(state.initialVolume);
-  elements.incomingVolume.value = String(state.calculationMode === 'ibc' ? 1 : state.incomingVolume);
+  elements.incomingVolume.value = String(getIncomingVolume());
   elements.coolingVolume.value = String(state.coolingVolume);
 }
 
 function renderConcentrationField(item, type) {
-  const label = type === 'initial' ? 'C₀ inicial (mg/L)' : 'C₁ ingreso (mg/L)';
+  const label = type === 'initial' ? 'C₀ inicial (mg/L)' : 'C ingreso (mg/L)';
   const value = type === 'initial' ? state.initialConcentrations[item.key] : state.incomingConcentrations[item.key];
   return `
     <label class="contaminant-field field">
@@ -408,7 +439,8 @@ function renderSettings() {
   elements.settingsSafetyFactor.value = String(state.settings.safetyFactor);
   elements.settingsOperationMode.value = state.settings.operationMode;
   elements.settingsOperationModeInline.value = state.settings.operationMode;
-  elements.settingsOrderReadout.textContent = `Orden visible: ${state.settings.contaminantOrder.join(', ')}`;
+  elements.settingsWarningThreshold.value = String(state.settings.warningThresholdRatio);
+  elements.settingsOrderReadout.textContent = `Orden automático: ${getAutomaticOrder().join(', ')}`;
   elements.settingsOrderList.innerHTML = state.settings.contaminantOrder.map((key) => metricChip(key, 'Visible', 'info')).join('');
   elements.settingsLimitsGrid.innerHTML = state.settings.contaminantOrder.map((key) => renderSettingsField(key, 'limit')).join('');
   elements.settingsCoolingGrid.innerHTML = state.settings.contaminantOrder.map((key) => renderSettingsField(key, 'cooling')).join('');
@@ -427,61 +459,125 @@ function renderSettingsField(key, type) {
 
 function renderResults() {
   const validations = validateState();
-  const results = getVisibleContaminants().map(buildResult);
+  const results = getVisibleContaminants().map(calculateContaminantResult);
 
-  elements.validationMessages.innerHTML = validations.map((message) => `<div class="${message.type === 'error' ? 'error' : 'notice'}">${message.text}</div>`).join('');
+  elements.validationMessages.innerHTML = validations
+    .map((message) => `<div class="${message.type === 'error' ? 'error' : 'notice'}">${message.text}</div>`)
+    .join('');
   elements.headlineMetrics.innerHTML = renderHeadlineMetrics(results);
   elements.resultsCards.innerHTML = results.map(renderResultCard).join('');
 }
 
 function renderHeadlineMetrics(results) {
-  const exceedCount = results.filter((item) => item.status.tone === 'danger').length;
-  const warningCount = results.filter((item) => item.status.tone === 'warning').length;
-  const okCount = results.filter((item) => item.status.tone === 'ok').length;
-  const maxFinal = results.reduce((acc, item) => Math.max(acc, item.finalConcentration), 0);
+  const statusCount = {
+    ok: results.filter((item) => item.status.tone === 'ok').length,
+    warning: results.filter((item) => item.status.tone === 'warning').length,
+    danger: results.filter((item) => item.status.tone === 'danger').length,
+  };
+
+  const maxFinal = results.reduce((acc, item) => Math.max(acc, item.finalConcentration ?? 0), 0);
+  const maxVolume = results.reduce((acc, item) => Math.max(acc, item.finalVolume ?? 0), 0);
 
   return [
-    metricChip('OK', String(okCount), 'ok'),
-    metricChip('Advertencia', String(warningCount), warningCount ? 'warning' : 'info'),
-    metricChip('Excede', String(exceedCount), exceedCount ? 'danger' : 'info'),
+    metricChip('OK', String(statusCount.ok), 'ok'),
+    metricChip('Advertencia', String(statusCount.warning), statusCount.warning ? 'warning' : 'info'),
+    metricChip('Excede', String(statusCount.danger), statusCount.danger ? 'danger' : 'info'),
     metricChip('C final máx', `${formatNumber(maxFinal)} mg/L`, 'info'),
+    metricChip('V final', `${formatNumber(maxVolume)} m³`, 'info'),
   ].join('');
 }
 
-function buildResult(item) {
-  const initialVolume = state.initialVolume;
-  const incomingVolume = state.calculationMode === 'ibc' ? 1 : state.incomingVolume;
+function calculateContaminantResult(item) {
+  const incomingVolume = getIncomingVolume();
   const initialConcentration = state.initialConcentrations[item.key] || 0;
-  const incomingConcentration = state.incomingConcentrations[item.key] || 0;
-  const correctedConcentration = state.settings.operationMode === 'real'
-    ? incomingConcentration * state.settings.safetyFactor
-    : incomingConcentration;
+  const incomingRawConcentration = state.incomingConcentrations[item.key] || 0;
+  const incomingCorrectedConcentration = applySafetyFactor(incomingRawConcentration);
+  const coolingConcentration = state.settings.coolingComposition[item.key] || 0;
 
-  const firstStage = mixStream({ volume: initialVolume, concentration: initialConcentration }, { volume: incomingVolume, concentration: correctedConcentration });
-  const secondStage = mixStream(
-    { volume: firstStage.volume, concentration: firstStage.concentration },
-    { volume: state.coolingVolume, concentration: state.settings.coolingComposition[item.key] || 0 },
-  );
+  const initialState = createInitialState(state.initialVolume, initialConcentration);
+  const incomingStage = applyFlowStage(initialState, {
+    label: state.calculationMode === 'ibc' ? 'Ingreso IBC' : 'Ingreso efluente',
+    addedVolume: incomingVolume,
+    addedConcentration: incomingCorrectedConcentration,
+  });
+
+  const coolingStage = applyFlowStage(incomingStage.finalState, {
+    label: 'Cooling water',
+    addedVolume: state.coolingVolume,
+    addedConcentration: coolingConcentration,
+  });
 
   const regulatoryLimit = state.settings.limits[item.key];
   const operativeLimit = typeof regulatoryLimit === 'number' ? regulatoryLimit * 0.8 : null;
-  const margin = operativeLimit === null ? null : operativeLimit - secondStage.concentration;
-  const status = getStatus(secondStage.concentration, operativeLimit, regulatoryLimit);
+  const warningLimit = operativeLimit === null ? null : operativeLimit * state.settings.warningThresholdRatio;
+  const finalConcentration = coolingStage.finalState.concentration;
+  const margin = operativeLimit === null || finalConcentration === null ? null : operativeLimit - finalConcentration;
+  const status = evaluateStatus(finalConcentration, warningLimit, operativeLimit);
 
   return {
     item,
-    initialConcentration,
-    incomingConcentration,
-    correctedConcentration,
-    afterAddition: firstStage.concentration,
-    finalConcentration: secondStage.concentration,
+    incomingRawConcentration,
+    incomingCorrectedConcentration,
+    initialMass: initialState.mass,
+    incomingMass: incomingStage.addedMass,
+    massAfterIncoming: incomingStage.finalState.mass,
+    coolingMass: coolingStage.addedMass,
+    finalMass: coolingStage.finalState.mass,
+    finalVolume: coolingStage.finalState.volume,
+    afterIncomingConcentration: incomingStage.finalState.concentration,
+    finalConcentration,
+    regulatoryLimit,
     operativeLimit,
+    warningLimit,
     margin,
     status,
   };
 }
 
+function createInitialState(volume, concentration) {
+  return {
+    volume,
+    concentration: volume === 0 ? null : concentration,
+    mass: volume * concentration,
+  };
+}
+
+function applyFlowStage(initialState, stage) {
+  const addedMass = stage.addedVolume * stage.addedConcentration;
+  const finalMass = initialState.mass + addedMass;
+  const finalVolume = initialState.volume + stage.addedVolume;
+
+  return {
+    label: stage.label,
+    addedMass,
+    finalState: {
+      volume: finalVolume,
+      mass: finalMass,
+      concentration: finalVolume === 0 ? null : finalMass / finalVolume,
+    },
+  };
+}
+
+function applySafetyFactor(concentration) {
+  if (state.settings.operationMode !== 'real') return concentration;
+  return concentration * state.settings.safetyFactor;
+}
+
+function evaluateStatus(finalConcentration, warningLimit, operativeLimit) {
+  if (finalConcentration === null) return { label: 'Sin cálculo', tone: 'info' };
+  if (operativeLimit === null) return { label: 'Info', tone: 'info' };
+  if (finalConcentration >= operativeLimit) return { label: 'Excede límite', tone: 'danger' };
+  if (warningLimit !== null && finalConcentration >= warningLimit) return { label: 'Advertencia', tone: 'warning' };
+  return { label: 'OK', tone: 'ok' };
+}
+
 function renderResultCard(result) {
+  const limitLabel = result.operativeLimit === null ? 'No definido' : `${formatNumber(result.operativeLimit)} mg/L`;
+  const regulatoryLabel = result.regulatoryLimit === null ? 'No definido' : `${formatNumber(result.regulatoryLimit)} mg/L`;
+  const warningLabel = result.warningLimit === null ? 'No definido' : `${formatNumber(result.warningLimit)} mg/L`;
+  const marginLabel = result.margin === null ? 'N/A' : `${formatSignedNumber(result.margin)} mg/L`;
+  const finalConcentrationLabel = result.finalConcentration === null ? 'No calculable (Vf = 0)' : `${formatNumber(result.finalConcentration)} mg/L`;
+
   return `
     <article class="card">
       <div class="result-card-header">
@@ -489,13 +585,19 @@ function renderResultCard(result) {
         <span class="status-pill ${result.status.tone}">${result.status.label}</span>
       </div>
       <div class="result-grid">
-        ${readonlyOutput('Concentración inicial', `${formatNumber(result.initialConcentration)} mg/L`)}
-        ${readonlyOutput('Concentración ingreso', `${formatNumber(result.incomingConcentration)} mg/L`)}
-        ${readonlyOutput('Concentración corregida', `${formatNumber(result.correctedConcentration)} mg/L`)}
-        ${readonlyOutput('Después del ingreso', `${formatNumber(result.afterAddition)} mg/L`)}
-        ${readonlyOutput('Concentración final', `${formatNumber(result.finalConcentration)} mg/L`)}
-        ${readonlyOutput('Límite operativo', result.operativeLimit === null ? 'No definido' : `${formatNumber(result.operativeLimit)} mg/L`)}
-        ${readonlyOutput('Margen disponible', result.margin === null ? 'N/A' : `${formatSignedNumber(result.margin)} mg/L`)}
+        ${readonlyOutput('Concentración inicial', `${formatNumber(state.initialConcentrations[result.item.key] || 0)} mg/L`)}
+        ${readonlyOutput('Concentración ingreso', `${formatNumber(result.incomingRawConcentration)} mg/L`)}
+        ${readonlyOutput('Concentración corregida', `${formatNumber(result.incomingCorrectedConcentration)} mg/L`)}
+        ${readonlyOutput('Masa inicial', `${formatNumber(result.initialMass)}`)}
+        ${readonlyOutput('Masa agregada', `${formatNumber(result.incomingMass)}`)}
+        ${readonlyOutput('Masa final', `${formatNumber(result.finalMass)}`)}
+        ${readonlyOutput('Volumen final', `${formatNumber(result.finalVolume)} m³`)}
+        ${readonlyOutput('C luego del ingreso', result.afterIncomingConcentration === null ? 'No calculable' : `${formatNumber(result.afterIncomingConcentration)} mg/L`)}
+        ${readonlyOutput('Concentración final', finalConcentrationLabel)}
+        ${readonlyOutput('Límite regulatorio', regulatoryLabel)}
+        ${readonlyOutput('Límite operativo', limitLabel)}
+        ${readonlyOutput('Umbral advertencia', warningLabel)}
+        ${readonlyOutput('Margen disponible', marginLabel)}
       </div>
     </article>
   `;
@@ -511,34 +613,34 @@ function metricChip(label, value, tone = 'info') {
 
 function validateState() {
   const messages = [];
-  if (state.inputMode === 'automatic' && state.autoInput.trim() && !parseAutomaticInput(false).orderUsed.length) {
-    messages.push({ type: 'error', text: 'La línea automática debe tener 13 valores sin Li o 14 valores con Li, todos no negativos.' });
+  const autoParsed = parseAutomaticLine(state.autoInput, getAutomaticOrder());
+  if (!EXCEL_SOURCE_STATUS.available) {
+    messages.push({ type: 'notice', text: EXCEL_SOURCE_STATUS.message });
   }
-  if (state.initialVolume + (state.calculationMode === 'ibc' ? 1 : state.incomingVolume) === 0) {
-    messages.push({ type: 'notice', text: 'V₀ y V₁ son cero; la concentración de la primera mezcla se informa como 0 mg/L para evitar división por cero.' });
+  if (state.inputMode === 'automatic' && state.autoInput.trim() && !autoParsed.valid) {
+    messages.push({ type: 'error', text: autoParsed.error });
+  }
+  if (state.initialVolume < 0 || state.incomingVolume < 0 || state.coolingVolume < 0) {
+    messages.push({ type: 'error', text: 'Los volúmenes no pueden ser negativos.' });
+  }
+  if (state.initialVolume + getIncomingVolume() === 0) {
+    messages.push({ type: 'notice', text: 'La primera etapa queda con Vf = 0. No se calcula concentración hasta que se agregue volumen.' });
+  }
+  if (state.initialVolume + getIncomingVolume() + state.coolingVolume === 0) {
+    messages.push({ type: 'error', text: 'El volumen final total es 0. La concentración final no puede calcularse.' });
   }
   if (state.calculationMode === 'ibc') {
-    messages.push({ type: 'notice', text: 'Modo IBC activo: el ingreso se fija en 1 m³ y queda preparado para futuros criterios específicos.' });
+    messages.push({ type: 'notice', text: 'Modo IBC activo: el ingreso queda fijado en 1 m³ y usa la misma secuencia de balance con criterios operativos propios preparados para ampliación.' });
   }
   return messages;
 }
 
-function mixStream(base, addition) {
-  const massBase = base.volume * base.concentration;
-  const massAdded = addition.volume * addition.concentration;
-  const totalVolume = base.volume + addition.volume;
-  if (totalVolume === 0) return { volume: 0, concentration: 0 };
-  return {
-    volume: totalVolume,
-    concentration: (massBase + massAdded) / totalVolume,
-  };
+function getIncomingVolume() {
+  return state.calculationMode === 'ibc' ? 1 : state.incomingVolume;
 }
 
-function getStatus(finalConcentration, operativeLimit, regulatoryLimit) {
-  if (regulatoryLimit === null || regulatoryLimit === undefined) return { label: 'Info', tone: 'info' };
-  if (finalConcentration > regulatoryLimit) return { label: 'Excede límite', tone: 'danger' };
-  if (finalConcentration > operativeLimit) return { label: 'Advertencia', tone: 'warning' };
-  return { label: 'OK', tone: 'ok' };
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function sanitizeNumber(value, fallback = 0) {
