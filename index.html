@@ -104,6 +104,9 @@ button {
   display: block;
   width: min(220px, 56vw);
   margin: 0 auto 18px;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(18, 56, 93, 0.12));
+  mix-blend-mode: multiply;
 }
 
 .tabs {
@@ -357,9 +360,9 @@ textarea:focus {
 }
 
 .below-work-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
@@ -367,6 +370,7 @@ textarea:focus {
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: center;
 }
 
 .flag-img {
@@ -376,6 +380,21 @@ textarea:focus {
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #fff;
+  box-shadow: 0 6px 14px rgba(18, 56, 93, 0.08);
+}
+
+.developer-launch {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.developer-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .nav {
@@ -490,13 +509,19 @@ textarea:focus {
 
   .below-work-row,
   .nav {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
   }
 
+  .developer-launch {
+    justify-content: center;
+  }
+
   .btn,
   .choice-button,
-  .language-button {
+  .language-button,
+  .developer-btn {
     width: 100%;
   }
 
@@ -513,8 +538,14 @@ textarea:focus {
       <div class="background-logo" aria-hidden="true"></div>
       <div class="overlay"></div>
 
+      <img
+        class="top-logo"
+        alt="Logo POSCO"
+        src="http://www.poscoargentina.com/public/images/xlogo-posco-argentina-1.png.pagespeed.ic.HsKLPImI1W.webp"
+        onerror="this.onerror=null;this.src='POSCO_logo.svg';"
+      />
+
       <main class="content">
-        <img class="top-logo" src="POSCO_logo.svg" alt="POSCO" />
 
         <div class="tabs" id="tabs"></div>
 
@@ -692,11 +723,26 @@ textarea:focus {
         </section>
 
         <div class="below-work-row">
-          <div class="flags-row">
-            <img class="flag-img" alt="Argentina" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='%2374ACDF'/%3E%3Crect y='21.33' width='96' height='21.33' fill='white'/%3E%3Ccircle cx='48' cy='32' r='6.5' fill='%23F6B40E'/%3E%3C/svg%3E" />
-            <img class="flag-img" alt="South Korea" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='white'/%3E%3Cpath d='M48 20a12 12 0 1 1 0 24 12 12 0 0 0 0-24z' fill='%23CD2E3A'/%3E%3Cpath d='M48 44a12 12 0 1 1 0-24 12 12 0 0 0 0 24z' fill='%230047A0'/%3E%3C/svg%3E" />
+          <div></div>
+
+          <div class="flags-row" aria-hidden="true">
+            <img
+              class="flag-img"
+              alt="Bandera de Corea del Sur"
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Flag_of_South_Korea.svg/960px-Flag_of_South_Korea.svg.png"
+            />
+            <img
+              class="flag-img"
+              alt="Bandera de Argentina"
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/960px-Flag_of_Argentina.svg.png"
+            />
           </div>
-          <button class="btn" type="button" id="open-dev-modal" data-i18n="devButton">Developer</button>
+
+          <div class="developer-launch" id="developerLaunchWrap">
+            <button class="developer-btn" id="developerBtn" type="button" data-i18n="devButton">
+              Developer
+            </button>
+          </div>
         </div>
 
         <div class="nav">
@@ -862,7 +908,7 @@ const elements = {
   homeButton: document.getElementById('home-button'),
   backButton: document.getElementById('back-button'),
   nextButton: document.getElementById('next-button'),
-  openDevModal: document.getElementById('open-dev-modal'),
+  openDevModal: document.getElementById('developerBtn'),
   closeDevModal: document.getElementById('close-dev-modal'),
   devModal: document.getElementById('dev-modal'),
 };
