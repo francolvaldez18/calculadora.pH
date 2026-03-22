@@ -166,6 +166,16 @@ button {
   text-align: center;
 }
 
+.welcome-main {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  text-align: center;
+  padding: 36px 18px 12px;
+}
+
+.welcome-main h2,
 .hero-card h1,
 .card h2,
 .dev-dialog h2 {
@@ -308,6 +318,44 @@ textarea:focus {
   border-color: rgba(11, 92, 171, 0.26);
 }
 
+.welcome-description,
+.language-label {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.language-label {
+  font-weight: 700;
+}
+
+.language-buttons,
+.welcome-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.language-button {
+  min-width: 140px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.language-button.active {
+  background: var(--button-bg);
+  color: #fff;
+  border-color: transparent;
+}
+
+.welcome-next {
+  min-width: 180px;
+}
+
 .below-work-row {
   display: flex;
   align-items: center;
@@ -447,7 +495,8 @@ textarea:focus {
   }
 
   .btn,
-  .choice-button {
+  .choice-button,
+  .language-button {
     width: 100%;
   }
 
@@ -469,21 +518,33 @@ textarea:focus {
 
         <div class="tabs" id="tabs"></div>
 
-        <section class="screen is-active" data-screen="0">
-          <div class="card hero-card">
-            <h1 data-i18n="appTitle">Concentration Calculator</h1>
-            <p data-i18n="appSubtitle">
-              Herramienta operativa para evaluar descargas en WWB a partir del estado inicial,
-              el ingreso de efluentes o IBC, el aporte de cooling water y los límites operativos.
+        <section class="screen is-active" id="screen-language" data-screen="0">
+          <div class="welcome-main">
+            <h2 id="main-title" data-i18n="welcomeTitle">Concentration Calculator - WWT - Utilities</h2>
+            <p class="welcome-description" id="main-description" data-i18n="welcomeDescription">
+              Herramienta para el cálculo y evaluación de concentración de contaminantes en el sistema WWB.
             </p>
-          </div>
+            <p class="language-label" id="language-label" data-i18n="selectLanguageText">Seleccionar idioma</p>
 
+            <div class="language-buttons">
+              <button class="language-button" id="langBtnEn" data-lang="en" data-i18n="langEnglish" type="button">English</button>
+              <button class="language-button" id="langBtnEs" data-lang="es" data-i18n="langSpanish" type="button">Español</button>
+              <button class="language-button" id="langBtnKo" data-lang="ko" data-i18n="langKorean" type="button">한국어</button>
+            </div>
+
+            <div class="welcome-actions">
+              <button class="btn welcome-next" id="welcomeNextButton" type="button" data-i18n="welcomeNext">Siguiente</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="1">
           <div class="grid grid-3">
             <article class="card">
               <h2 data-i18n="calcModeTitle">Modo de cálculo</h2>
               <div class="choice-buttons" id="calculation-mode-selector">
-                <button type="button" class="choice-button is-active" data-mode="single">Único</button>
-                <button type="button" class="choice-button" data-mode="multiple">Múltiple</button>
+                <button type="button" class="choice-button is-active" data-mode="single" data-i18n="modeSingle">Único</button>
+                <button type="button" class="choice-button" data-mode="multiple" data-i18n="modeMultiple">Múltiple</button>
                 <button type="button" class="choice-button" data-mode="ibc">IBC</button>
               </div>
               <label class="field" id="single-parameter-field">
@@ -495,8 +556,8 @@ textarea:focus {
             <article class="card">
               <h2 data-i18n="dataLoadModeTitle">Modo de carga</h2>
               <div class="choice-buttons" id="input-mode-selector">
-                <button type="button" class="choice-button is-active" data-input-mode="manual">Manual</button>
-                <button type="button" class="choice-button" data-input-mode="automatic">Automático</button>
+                <button type="button" class="choice-button is-active" data-input-mode="manual" data-i18n="inputManual">Manual</button>
+                <button type="button" class="choice-button" data-input-mode="automatic" data-i18n="inputAutomatic">Automático</button>
               </div>
               <label class="field">
                 <span data-i18n="operationMode">Modo global</span>
@@ -528,17 +589,6 @@ textarea:focus {
             </div>
             <div class="cards" id="auto-preview"></div>
           </div>
-
-          <div class="below-work-row">
-            <div class="flags-row">
-              <img class="flag-img" alt="Argentina" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='%2374ACDF'/%3E%3Crect y='21.33' width='96' height='21.33' fill='white'/%3E%3Ccircle cx='48' cy='32' r='6.5' fill='%23F6B40E'/%3E%3C/svg%3E" />
-              <img class="flag-img" alt="South Korea" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='white'/%3E%3Cpath d='M48 20a12 12 0 1 1 0 24 12 12 0 0 0 0-24z' fill='%23CD2E3A'/%3E%3Cpath d='M48 44a12 12 0 1 1 0-24 12 12 0 0 0 0 24z' fill='%230047A0'/%3E%3C/svg%3E" />
-            </div>
-            <button class="btn" type="button" id="open-dev-modal" data-i18n="devButton">Developer</button>
-          </div>
-        </section>
-
-        <section class="screen" data-screen="1">
           <div class="grid grid-3">
             <article class="card">
               <h2 data-i18n="stageInitial">Etapa 1 · Estado inicial</h2>
@@ -641,6 +691,14 @@ textarea:focus {
           </div>
         </section>
 
+        <div class="below-work-row">
+          <div class="flags-row">
+            <img class="flag-img" alt="Argentina" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='%2374ACDF'/%3E%3Crect y='21.33' width='96' height='21.33' fill='white'/%3E%3Ccircle cx='48' cy='32' r='6.5' fill='%23F6B40E'/%3E%3C/svg%3E" />
+            <img class="flag-img" alt="South Korea" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='white'/%3E%3Cpath d='M48 20a12 12 0 1 1 0 24 12 12 0 0 0 0-24z' fill='%23CD2E3A'/%3E%3Cpath d='M48 44a12 12 0 1 1 0-24 12 12 0 0 0 0 24z' fill='%230047A0'/%3E%3C/svg%3E" />
+          </div>
+          <button class="btn" type="button" id="open-dev-modal" data-i18n="devButton">Developer</button>
+        </div>
+
         <div class="nav">
           <button class="btn" type="button" id="home-button">Home</button>
           <button class="btn" type="button" id="back-button">Back</button>
@@ -688,7 +746,58 @@ const EXCEL_SOURCE_STATUS = {
 
 const TEXTS = {
   es: {
-    tabs: ['Inicio', 'Cálculo', 'Resultados', 'Settings'],
+    tabs: ['Idioma', 'Cálculo', 'Resultados', 'Settings'],
+    welcomeTitle: 'Concentration Calculator - WWT - Utilities',
+    welcomeDescription: 'Herramienta para el cálculo y evaluación de concentración de contaminantes en el sistema WWB.',
+    selectLanguageText: 'Seleccionar idioma',
+    langEnglish: 'English',
+    langSpanish: 'Español',
+    langKorean: '한국어',
+    welcomeNext: 'Siguiente',
+    modeSingle: 'Único',
+    modeMultiple: 'Múltiple',
+    inputManual: 'Manual',
+    inputAutomatic: 'Automático',
+    home: 'Home',
+    back: 'Back',
+    next: 'Next',
+    devButton: 'Developer',
+  },
+  en: {
+    tabs: ['Language', 'Calculation', 'Results', 'Settings'],
+    welcomeTitle: 'Concentration Calculator - WWT - Utilities',
+    welcomeDescription: 'Tool for calculating and evaluating contaminant concentration in the WWB system.',
+    selectLanguageText: 'Select language',
+    langEnglish: 'English',
+    langSpanish: 'Spanish',
+    langKorean: 'Korean',
+    welcomeNext: 'Next',
+    modeSingle: 'Single',
+    modeMultiple: 'Multiple',
+    inputManual: 'Manual',
+    inputAutomatic: 'Automatic',
+    home: 'Home',
+    back: 'Back',
+    next: 'Next',
+    devButton: 'Developer',
+  },
+  ko: {
+    tabs: ['언어', '계산', '결과', '설정'],
+    welcomeTitle: 'Concentration Calculator - WWT - Utilities',
+    welcomeDescription: 'WWB 시스템의 오염물질 농도 계산 및 평가 도구',
+    selectLanguageText: '언어 선택',
+    langEnglish: '영어',
+    langSpanish: '스페인어',
+    langKorean: '한국어',
+    welcomeNext: '다음',
+    modeSingle: '단일',
+    modeMultiple: '다중',
+    inputManual: '수동',
+    inputAutomatic: '자동',
+    home: '홈',
+    back: '뒤로',
+    next: '다음',
+    devButton: '개발자',
   },
 };
 
@@ -720,6 +829,9 @@ const state = {
 const elements = {
   tabs: document.getElementById('tabs'),
   screens: [...document.querySelectorAll('.screen')],
+  languageButtons: [...document.querySelectorAll('.language-button')],
+  welcomeNextButton: document.getElementById('welcomeNextButton'),
+  nav: document.querySelector('.nav'),
   calcModeSelector: document.getElementById('calculation-mode-selector'),
   inputModeSelector: document.getElementById('input-mode-selector'),
   singleParameterField: document.getElementById('single-parameter-field'),
@@ -792,6 +904,16 @@ function saveSettings() {
 }
 
 function bindEvents() {
+  elements.languageButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      state.settings.locale = button.dataset.lang;
+      saveSettings();
+      render();
+    });
+  });
+
+  elements.welcomeNextButton.addEventListener('click', () => setActiveScreen(1));
+
   elements.calcModeSelector.addEventListener('click', (event) => {
     const button = event.target.closest('[data-mode]');
     if (!button) return;
@@ -886,6 +1008,7 @@ function bindEvents() {
 
 function render() {
   ensureSelectedParameter();
+  renderI18n();
   renderTabs();
   renderScreenState();
   renderModeButtons();
@@ -907,6 +1030,26 @@ function renderTabs() {
   });
 }
 
+function translate(key, fallback = '') {
+  return TEXTS[state.settings.locale]?.[key] ?? TEXTS.es?.[key] ?? fallback;
+}
+
+function renderI18n() {
+  document.querySelectorAll('[data-i18n]').forEach((node) => {
+    const key = node.dataset.i18n;
+    const translated = translate(key, node.textContent);
+    node.textContent = translated;
+  });
+
+  elements.languageButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.lang === state.settings.locale);
+  });
+
+  elements.homeButton.textContent = translate('home', 'Home');
+  elements.backButton.textContent = translate('back', 'Back');
+  elements.nextButton.textContent = translate('next', 'Next');
+}
+
 function setActiveScreen(index) {
   state.activeScreen = index;
   renderScreenState();
@@ -919,6 +1062,7 @@ function renderScreenState() {
   });
   elements.backButton.disabled = state.activeScreen === 0;
   elements.nextButton.disabled = state.activeScreen === elements.screens.length - 1;
+  elements.nav.classList.toggle('hidden', state.activeScreen === 0);
 }
 
 function renderModeButtons() {
