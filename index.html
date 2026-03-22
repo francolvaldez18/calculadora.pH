@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,219 +13,201 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="shell">
-      <aside class="sidebar card">
-        <div class="brand-stack">
-          <img src="POSCO_logo.svg" alt="POSCO logo" class="brand-logo posco" />
-          <img src="PoscoArg.png" alt="Posco Argentina" class="brand-logo argentina" />
-        </div>
+    <div class="app-screen">
+      <img class="background-image" src="241003900_206422261547805_2303182056527363582_n.jpg" alt="Background" />
+      <div class="background-logo" aria-hidden="true"></div>
+      <div class="overlay"></div>
 
-        <nav class="nav-section">
-          <button class="nav-item active" type="button">Concentration Calculator</button>
-          <button class="nav-item" type="button" id="open-settings-nav">Settings</button>
-        </nav>
+      <main class="content">
+        <img class="top-logo" src="POSCO_logo.svg" alt="POSCO" />
 
-        <section class="side-panel">
-          <p class="eyebrow">Decision support</p>
-          <h2>WWB contaminant evolution</h2>
-          <p>
-            Evaluate pond conditions, effluent or IBC additions, and cooling water impact with
-            instant operational feedback.
-          </p>
-        </section>
+        <div class="tabs" id="tabs"></div>
 
-        <section class="side-summary" id="side-summary">
-          <div>
-            <span>Mode</span>
-            <strong id="summary-mode">Single</strong>
-          </div>
-          <div>
-            <span>Input</span>
-            <strong id="summary-input-mode">Manual</strong>
-          </div>
-          <div>
-            <span>Safety</span>
-            <strong id="summary-factor">1.25x</strong>
-          </div>
-        </section>
-      </aside>
-
-      <main class="main-content">
-        <header class="page-header card">
-          <div>
-            <p class="eyebrow">Plant tool</p>
-            <h1>Concentration Calculator</h1>
-            <p>
-              Operational calculator for controlled discharge decisions in the WWB system.
+        <section class="screen is-active" data-screen="0">
+          <div class="card hero-card">
+            <h1 data-i18n="appTitle">Concentration Calculator</h1>
+            <p data-i18n="appSubtitle">
+              Herramienta operativa para evaluar descargas en WWB a partir del estado inicial,
+              el ingreso de efluentes o IBC, el aporte de cooling water y los límites operativos.
             </p>
           </div>
-          <div class="header-actions">
-            <button class="ghost-button" type="button" id="reset-button">Reset</button>
-            <button class="primary-button" type="button" id="open-settings-button">
-              Settings
-            </button>
-          </div>
-        </header>
 
-        <section class="controls-grid">
-          <article class="card control-card">
-            <div class="card-title-row">
-              <h2>Calculation mode</h2>
-            </div>
-            <div class="segmented" id="calculation-mode-selector">
-              <button type="button" data-mode="single" class="is-active">Single</button>
-              <button type="button" data-mode="multiple">Multiple</button>
-              <button type="button" data-mode="ibc">IBC</button>
-            </div>
-            <label class="field">
-              <span>Selected parameter</span>
-              <select id="single-parameter-select"></select>
-            </label>
-            <p class="helper-text">
-              In single mode, calculations and results are focused on one contaminant.
-            </p>
-          </article>
-
-          <article class="card control-card">
-            <div class="card-title-row">
-              <h2>Data entry</h2>
-            </div>
-            <div class="segmented" id="input-mode-selector">
-              <button type="button" data-input-mode="manual" class="is-active">Manual</button>
-              <button type="button" data-input-mode="automatic">Automatic</button>
-            </div>
-            <div id="auto-input-panel" class="auto-input-panel hidden">
-              <label class="field">
-                <span>Paste automatic line</span>
-                <textarea
-                  id="auto-input-text"
-                  rows="4"
-                  placeholder="347.4710 0.0390 0.0000 0.3540 0.0080 0.0000 0.0160 0.0050 0.0070 0.0050 0.0010 0.0010 1.1780 0.0000"
-                ></textarea>
-              </label>
-              <p class="helper-text" id="auto-input-help">
-                Required order: Ba, Al, P, Fe, Ni, Cu, Zn, Pb, Cr, Mn, Co, Li (optional), B, Cd.
-              </p>
-              <div class="preview-box" id="auto-preview"></div>
-            </div>
-          </article>
-        </section>
-
-        <section class="stage-grid">
-          <article class="card stage-card">
-            <div class="card-title-row">
-              <div>
-                <p class="eyebrow">Stage 1</p>
-                <h2>Initial pond condition</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <h2 data-i18n="calcModeTitle">Modo de cálculo</h2>
+              <div class="choice-buttons" id="calculation-mode-selector">
+                <button type="button" class="choice-button is-active" data-mode="single">Único</button>
+                <button type="button" class="choice-button" data-mode="multiple">Múltiple</button>
+                <button type="button" class="choice-button" data-mode="ibc">IBC</button>
               </div>
-            </div>
-            <div class="volume-row">
+              <label class="field" id="single-parameter-field">
+                <span data-i18n="selectedParameter">Parámetro seleccionado</span>
+                <select id="single-parameter-select"></select>
+              </label>
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="dataLoadModeTitle">Modo de carga</h2>
+              <div class="choice-buttons" id="input-mode-selector">
+                <button type="button" class="choice-button is-active" data-input-mode="manual">Manual</button>
+                <button type="button" class="choice-button" data-input-mode="automatic">Automático</button>
+              </div>
               <label class="field">
-                <span>Initial volume V₀ (m³)</span>
+                <span data-i18n="operationMode">Modo global</span>
+                <select id="settings-operation-mode-inline">
+                  <option value="real">Real</option>
+                  <option value="theoretical">Teórico</option>
+                </select>
+              </label>
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="quickSummary">Resumen rápido</h2>
+              <div class="metric-chips" id="summary-chips"></div>
+            </article>
+          </div>
+
+          <div class="card auto-panel hidden" id="auto-input-panel">
+            <h2 data-i18n="autoLoadTitle">Carga automática</h2>
+            <label class="field">
+              <span data-i18n="pasteLine">Pegar línea de datos</span>
+              <textarea
+                id="auto-input-text"
+                rows="4"
+                placeholder="347.4710 0.0390 0.0000 0.3540 0.0080 0.0000 0.0160 0.0050 0.0070 0.0050 0.0010 0.0010 1.1780 0.0000"
+              ></textarea>
+            </label>
+            <div class="notice" id="auto-input-help">
+              Orden obligatorio: Ba, Al, P, Fe, Ni, Cu, Zn, Pb, Cr, Mn, Co, Li (opcional), B, Cd.
+            </div>
+            <div class="cards" id="auto-preview"></div>
+          </div>
+
+          <div class="below-work-row">
+            <div class="flags-row">
+              <img class="flag-img" alt="Argentina" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='%2374ACDF'/%3E%3Crect y='21.33' width='96' height='21.33' fill='white'/%3E%3Ccircle cx='48' cy='32' r='6.5' fill='%23F6B40E'/%3E%3C/svg%3E" />
+              <img class="flag-img" alt="South Korea" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64' viewBox='0 0 96 64'%3E%3Crect width='96' height='64' fill='white'/%3E%3Cpath d='M48 20a12 12 0 1 1 0 24 12 12 0 0 0 0-24z' fill='%23CD2E3A'/%3E%3Cpath d='M48 44a12 12 0 1 1 0-24 12 12 0 0 0 0 24z' fill='%230047A0'/%3E%3C/svg%3E" />
+            </div>
+            <button class="btn" type="button" id="open-dev-modal" data-i18n="devButton">Developer</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="1">
+          <div class="grid grid-3">
+            <article class="card">
+              <h2 data-i18n="stageInitial">Etapa 1 · Estado inicial</h2>
+              <label class="field">
+                <span data-i18n="initialVolume">Volumen inicial V₀ (m³)</span>
                 <input id="initial-volume" type="number" min="0" step="0.01" value="100" />
               </label>
-            </div>
-            <div id="initial-concentrations" class="contaminant-grid"></div>
-          </article>
-
-          <article class="card stage-card">
-            <div class="card-title-row">
-              <div>
-                <p class="eyebrow">Stage 2</p>
-                <h2>Effluent / IBC addition</h2>
+              <div class="notice" data-i18n="initialStageHelp">
+                Ingresar el volumen actual de la pileta y las concentraciones iniciales.
               </div>
-              <div class="stage-pill" id="factor-pill">Corrected by safety factor</div>
-            </div>
-            <div class="volume-row two-columns">
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="stageAddition">Etapa 2 · Ingreso</h2>
               <label class="field">
-                <span>Added volume V₁ (m³)</span>
+                <span data-i18n="incomingVolume">Volumen de ingreso V₁ (m³)</span>
                 <input id="incoming-volume" type="number" min="0" step="0.01" value="10" />
               </label>
-              <div class="stat-box">
-                <span>Calculation basis</span>
-                <strong id="operation-mode-label">Real mode</strong>
-              </div>
-            </div>
-            <div id="incoming-concentrations" class="contaminant-grid"></div>
-          </article>
+              <div class="readonly-output" id="factor-readout"></div>
+            </article>
 
-          <article class="card stage-card">
-            <div class="card-title-row">
-              <div>
-                <p class="eyebrow">Stage 3</p>
-                <h2>Cooling water</h2>
-              </div>
-            </div>
-            <div class="volume-row two-columns">
+            <article class="card">
+              <h2 data-i18n="stageCooling">Etapa 3 · Cooling water</h2>
               <label class="field">
-                <span>Cooling water volume (m³)</span>
+                <span data-i18n="coolingVolume">Volumen cooling water (m³)</span>
                 <input id="cooling-volume" type="number" min="0" step="0.01" value="0" />
               </label>
-              <div class="stat-box">
-                <span>Composition source</span>
-                <strong>Global settings</strong>
-              </div>
-            </div>
-            <div id="cooling-preview" class="preview-box compact"></div>
-          </article>
+              <div class="readonly-output" id="cooling-mode-readout"></div>
+            </article>
+          </div>
+
+          <div class="grid grid-3 concentrations-section">
+            <article class="card">
+              <h2 data-i18n="initialConcentrationsTitle">Concentraciones iniciales</h2>
+              <div id="initial-concentrations" class="grid"></div>
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="incomingConcentrationsTitle">Concentraciones de ingreso</h2>
+              <div id="incoming-concentrations" class="grid"></div>
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="coolingCompositionTitle">Composición cooling water</h2>
+              <div id="cooling-preview" class="cards"></div>
+            </article>
+          </div>
         </section>
 
-        <section class="card results-card">
-          <div class="card-title-row">
-            <div>
-              <p class="eyebrow">Results</p>
-              <h2>Operational evaluation</h2>
+        <section class="screen" data-screen="2">
+          <div class="cards">
+            <article class="card">
+              <h2 data-i18n="resultsTitle">Evaluación operativa</h2>
+              <div class="metric-chips" id="headline-metrics"></div>
+              <div id="validation-messages"></div>
+            </article>
+          </div>
+
+          <div class="cards" id="results-cards"></div>
+        </section>
+
+        <section class="screen" data-screen="3">
+          <div class="card">
+            <h2 data-i18n="settingsTitle">Settings</h2>
+            <div class="grid grid-3">
+              <label class="field">
+                <span data-i18n="safetyFactor">Factor de seguridad</span>
+                <input id="settings-safety-factor" type="number" min="1" step="0.01" />
+              </label>
+              <label class="field">
+                <span data-i18n="operationMode">Modo</span>
+                <select id="settings-operation-mode">
+                  <option value="real">Real</option>
+                  <option value="theoretical">Teórico</option>
+                </select>
+              </label>
+              <div class="readonly-output" id="settings-order-readout"></div>
             </div>
           </div>
-          <div id="validation-messages" class="message-stack"></div>
-          <div id="results-table-wrapper" class="table-wrapper"></div>
+
+          <div class="grid grid-3">
+            <article class="card">
+              <h2 data-i18n="limitsTitle">Límites máximos (mg/L)</h2>
+              <div id="settings-limits-grid" class="grid"></div>
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="coolingSettingsTitle">Cooling water (mg/L)</h2>
+              <div id="settings-cooling-grid" class="grid"></div>
+            </article>
+
+            <article class="card">
+              <h2 data-i18n="visibleOrderTitle">Orden visible</h2>
+              <div id="settings-order-list" class="metric-chips"></div>
+            </article>
+          </div>
         </section>
+
+        <div class="nav">
+          <button class="btn" type="button" id="home-button">Home</button>
+          <button class="btn" type="button" id="back-button">Back</button>
+          <button class="btn" type="button" id="next-button">Next</button>
+        </div>
       </main>
     </div>
 
-    <div class="settings-overlay hidden" id="settings-overlay"></div>
-    <aside class="settings-drawer hidden" id="settings-drawer" aria-hidden="true">
-      <div class="settings-header">
-        <div>
-          <p class="eyebrow">Persistent settings</p>
-          <h2>Global configuration</h2>
-        </div>
-        <button type="button" class="icon-button" id="close-settings-button">✕</button>
+    <div class="dev-modal hidden" id="dev-modal">
+      <div class="dev-dialog">
+        <h2 data-i18n="devModalTitle">Technical information</h2>
+        <p data-i18n="devModalBody">
+          Concentration Calculator aplica balance de masa por contaminante, permite carga manual o automática y usa ajustes persistentes para factor de seguridad, límites y composición de cooling water.
+        </p>
+        <button class="btn" type="button" id="close-dev-modal">Close</button>
       </div>
-
-      <div class="settings-body">
-        <section class="settings-section card inset-card">
-          <h3>Safety and operation</h3>
-          <label class="field">
-            <span>Safety factor</span>
-            <input id="settings-safety-factor" type="number" min="1" step="0.01" />
-          </label>
-          <label class="field">
-            <span>Mode</span>
-            <select id="settings-operation-mode">
-              <option value="real">Real</option>
-              <option value="theoretical">Theoretical</option>
-            </select>
-          </label>
-        </section>
-
-        <section class="settings-section card inset-card">
-          <h3>Visible contaminant order</h3>
-          <p class="helper-text">Order used in forms, automatic parsing preview, and results.</p>
-          <div id="settings-order-list" class="order-list"></div>
-        </section>
-
-        <section class="settings-section card inset-card">
-          <h3>Regulatory maximum limits (mg/L)</h3>
-          <div id="settings-limits-grid" class="settings-grid"></div>
-        </section>
-
-        <section class="settings-section card inset-card">
-          <h3>Cooling water composition (mg/L)</h3>
-          <div id="settings-cooling-grid" class="settings-grid"></div>
-        </section>
-      </div>
-    </aside>
+    </div>
 
     <script src="app.js"></script>
   </body>
