@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Concentration Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar card">
+        <div class="brand-stack">
+          <img src="POSCO_logo.svg" alt="POSCO logo" class="brand-logo posco" />
+          <img src="PoscoArg.png" alt="Posco Argentina" class="brand-logo argentina" />
+        </div>
+
+        <nav class="nav-section">
+          <button class="nav-item active" type="button">Concentration Calculator</button>
+          <button class="nav-item" type="button" id="open-settings-nav">Settings</button>
+        </nav>
+
+        <section class="side-panel">
+          <p class="eyebrow">Decision support</p>
+          <h2>WWB contaminant evolution</h2>
+          <p>
+            Evaluate pond conditions, effluent or IBC additions, and cooling water impact with
+            instant operational feedback.
+          </p>
+        </section>
+
+        <section class="side-summary" id="side-summary">
+          <div>
+            <span>Mode</span>
+            <strong id="summary-mode">Single</strong>
+          </div>
+          <div>
+            <span>Input</span>
+            <strong id="summary-input-mode">Manual</strong>
+          </div>
+          <div>
+            <span>Safety</span>
+            <strong id="summary-factor">1.25x</strong>
+          </div>
+        </section>
+      </aside>
+
+      <main class="main-content">
+        <header class="page-header card">
+          <div>
+            <p class="eyebrow">Plant tool</p>
+            <h1>Concentration Calculator</h1>
+            <p>
+              Operational calculator for controlled discharge decisions in the WWB system.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="ghost-button" type="button" id="reset-button">Reset</button>
+            <button class="primary-button" type="button" id="open-settings-button">
+              Settings
+            </button>
+          </div>
+        </header>
+
+        <section class="controls-grid">
+          <article class="card control-card">
+            <div class="card-title-row">
+              <h2>Calculation mode</h2>
+            </div>
+            <div class="segmented" id="calculation-mode-selector">
+              <button type="button" data-mode="single" class="is-active">Single</button>
+              <button type="button" data-mode="multiple">Multiple</button>
+              <button type="button" data-mode="ibc">IBC</button>
+            </div>
+            <label class="field">
+              <span>Selected parameter</span>
+              <select id="single-parameter-select"></select>
+            </label>
+            <p class="helper-text">
+              In single mode, calculations and results are focused on one contaminant.
+            </p>
+          </article>
+
+          <article class="card control-card">
+            <div class="card-title-row">
+              <h2>Data entry</h2>
+            </div>
+            <div class="segmented" id="input-mode-selector">
+              <button type="button" data-input-mode="manual" class="is-active">Manual</button>
+              <button type="button" data-input-mode="automatic">Automatic</button>
+            </div>
+            <div id="auto-input-panel" class="auto-input-panel hidden">
+              <label class="field">
+                <span>Paste automatic line</span>
+                <textarea
+                  id="auto-input-text"
+                  rows="4"
+                  placeholder="347.4710 0.0390 0.0000 0.3540 0.0080 0.0000 0.0160 0.0050 0.0070 0.0050 0.0010 0.0010 1.1780 0.0000"
+                ></textarea>
+              </label>
+              <p class="helper-text" id="auto-input-help">
+                Required order: Ba, Al, P, Fe, Ni, Cu, Zn, Pb, Cr, Mn, Co, Li (optional), B, Cd.
+              </p>
+              <div class="preview-box" id="auto-preview"></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="stage-grid">
+          <article class="card stage-card">
+            <div class="card-title-row">
+              <div>
+                <p class="eyebrow">Stage 1</p>
+                <h2>Initial pond condition</h2>
+              </div>
+            </div>
+            <div class="volume-row">
+              <label class="field">
+                <span>Initial volume V₀ (m³)</span>
+                <input id="initial-volume" type="number" min="0" step="0.01" value="100" />
+              </label>
+            </div>
+            <div id="initial-concentrations" class="contaminant-grid"></div>
+          </article>
+
+          <article class="card stage-card">
+            <div class="card-title-row">
+              <div>
+                <p class="eyebrow">Stage 2</p>
+                <h2>Effluent / IBC addition</h2>
+              </div>
+              <div class="stage-pill" id="factor-pill">Corrected by safety factor</div>
+            </div>
+            <div class="volume-row two-columns">
+              <label class="field">
+                <span>Added volume V₁ (m³)</span>
+                <input id="incoming-volume" type="number" min="0" step="0.01" value="10" />
+              </label>
+              <div class="stat-box">
+                <span>Calculation basis</span>
+                <strong id="operation-mode-label">Real mode</strong>
+              </div>
+            </div>
+            <div id="incoming-concentrations" class="contaminant-grid"></div>
+          </article>
+
+          <article class="card stage-card">
+            <div class="card-title-row">
+              <div>
+                <p class="eyebrow">Stage 3</p>
+                <h2>Cooling water</h2>
+              </div>
+            </div>
+            <div class="volume-row two-columns">
+              <label class="field">
+                <span>Cooling water volume (m³)</span>
+                <input id="cooling-volume" type="number" min="0" step="0.01" value="0" />
+              </label>
+              <div class="stat-box">
+                <span>Composition source</span>
+                <strong>Global settings</strong>
+              </div>
+            </div>
+            <div id="cooling-preview" class="preview-box compact"></div>
+          </article>
+        </section>
+
+        <section class="card results-card">
+          <div class="card-title-row">
+            <div>
+              <p class="eyebrow">Results</p>
+              <h2>Operational evaluation</h2>
+            </div>
+          </div>
+          <div id="validation-messages" class="message-stack"></div>
+          <div id="results-table-wrapper" class="table-wrapper"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="settings-overlay hidden" id="settings-overlay"></div>
+    <aside class="settings-drawer hidden" id="settings-drawer" aria-hidden="true">
+      <div class="settings-header">
+        <div>
+          <p class="eyebrow">Persistent settings</p>
+          <h2>Global configuration</h2>
+        </div>
+        <button type="button" class="icon-button" id="close-settings-button">✕</button>
+      </div>
+
+      <div class="settings-body">
+        <section class="settings-section card inset-card">
+          <h3>Safety and operation</h3>
+          <label class="field">
+            <span>Safety factor</span>
+            <input id="settings-safety-factor" type="number" min="1" step="0.01" />
+          </label>
+          <label class="field">
+            <span>Mode</span>
+            <select id="settings-operation-mode">
+              <option value="real">Real</option>
+              <option value="theoretical">Theoretical</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="settings-section card inset-card">
+          <h3>Visible contaminant order</h3>
+          <p class="helper-text">Order used in forms, automatic parsing preview, and results.</p>
+          <div id="settings-order-list" class="order-list"></div>
+        </section>
+
+        <section class="settings-section card inset-card">
+          <h3>Regulatory maximum limits (mg/L)</h3>
+          <div id="settings-limits-grid" class="settings-grid"></div>
+        </section>
+
+        <section class="settings-section card inset-card">
+          <h3>Cooling water composition (mg/L)</h3>
+          <div id="settings-cooling-grid" class="settings-grid"></div>
+        </section>
+      </div>
+    </aside>
+
+    <script src="app.js"></script>
+  </body>
+</html>
