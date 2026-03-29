@@ -20,9 +20,11 @@
       .screen{display:none}.screen.active{display:block} h3{margin:0 0 10px;font-size:calc(.84rem + var(--font-bump))}
       .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
       .field{display:flex;flex-direction:column;gap:5px} label{font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary);font-weight:600}
-      input,select{border:1px solid rgba(73,119,153,.28);border-radius:10px;padding:7px 8px;background:#fff;color:var(--text-primary);width:100%}
+      input,select{border:1px solid rgba(73,119,153,.28);border-radius:10px;padding:7px 8px;background:#fff;color:var(--text-primary);width:100%;transition:background-color .18s ease,border-color .18s ease}
       .readonly-output{border:none;border-radius:12px;padding:.68rem .9rem;font-size:calc(.84rem + var(--font-bump));font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));width:100%;text-align:left;box-shadow:0 8px 16px rgba(9,58,99,.2);opacity:.9}.readonly-output:disabled{cursor:default;opacity:1;color:#fff}
-      .input-invalid{border:2px solid var(--danger);background:#fff7f7}.btn{border:none;border-radius:12px;padding:.68rem .9rem;font-size:calc(.84rem + var(--font-bump));font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));cursor:pointer;box-shadow:0 8px 16px rgba(9,58,99,.2)}.btn:disabled{opacity:.55;cursor:not-allowed}
+      .input-empty{background:rgba(255, 243, 205, .55);border-color:rgba(211,158,0,.5)}
+      .input-valid{background:rgba(198, 239, 206, .55);border-color:rgba(91, 161, 85, .55)}
+      .input-invalid{border:2px solid var(--danger);background:rgba(255, 199, 206, .55)}.btn{border:none;border-radius:12px;padding:.68rem .9rem;font-size:calc(.84rem + var(--font-bump));font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));cursor:pointer;box-shadow:0 8px 16px rgba(9,58,99,.2)}.btn:disabled{opacity:.55;cursor:not-allowed}
       .choice-buttons{display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:.8rem}.mode-choices{grid-template-columns:repeat(3,minmax(120px,1fr));}.added-chip{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff;border-color:#0d6eaa}.added-chip b{color:#fff;font-size:1.1rem}.inverted-block,#additionCard{background:linear-gradient(180deg,#1285cb,#0d6eaa)!important;border-color:#0d6eaa!important;color:#fff!important}#additionCard h4{font-size:calc(.95rem + var(--font-bump));margin-bottom:10px;color:#fff!important}#additionCard .metric-chip,#additionCard .metric-chip b,#additionCard .plus-center{color:#fff!important}#additionCard .metric-chip{font-size:calc(.86rem + var(--font-bump))}#additionCard .metric-chip{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.45)!important}#additionCard .card{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.45)!important}.choice-button{border:2px solid #0d6eaa;border-radius:12px;padding:.78rem .88rem;font-size:clamp(.88rem,1.45vw,.96rem);font-weight:800;color:#0d6eaa;background:#fff;box-shadow:0 5px 10px rgba(9,58,99,.12);cursor:pointer;text-align:center;min-height:54px}.choice-button.active{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff}
       .card{border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.84);padding:11px}.card h4{margin:0 0 6px;font-size:calc(.84rem + var(--font-bump));color:var(--button-bg)}.dose-card{text-align:center;margin-top:10px}.dose-card h4{display:none}.dose-type{font-size:calc(1.05rem + var(--font-bump));font-weight:700;color:var(--text-secondary)}.dose-value{font-size:1.85rem;font-weight:800;color:var(--button-bg);line-height:1.2}
       .kpi{margin-top:10px;border:1px solid rgba(13,110,170,.35);border-radius:12px;background:rgba(13,110,170,.1);padding:12px}.kpi-label{font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary)}.kpi-value{font-size:1.35rem;font-weight:800;color:var(--button-bg)}
@@ -210,6 +212,7 @@
       const state={selectedLanguage:'es',selectedTask:'',tankState:{levelMm:NaN,volumeM3:0,pH:NaN},chemicals:{naohPct:30,h2so4Pct:98},effluents:[{name:'LH',volumeM3:NaN,pH:NaN}],neutralization:{mode:'chemicals',referencePh:12.5},neutralizationStrategy:{effluentAvailable:true,maxEffluentM3:10,recommendedMode:'combined',selectedMode:'combined',targetPh:7},tutorial:{selecting:false,active:false,mode:'',stepIndex:0,steps:[],waitingAdvance:false}};
       let currentScreen='language';
       const $=id=>document.getElementById(id); const t=k=>tr[state.selectedLanguage][k]??k; const fmt=(v,n=3)=>Number(v).toFixed(n); const num=(v,fb=NaN)=>{ if(typeof v==='number') return Number.isFinite(v)?v:fb; const n=Number(String(v).replace(',', '.').trim()); return Number.isFinite(n)?n:fb; };
+      const setFieldTone=(el,tone)=>{ if(!el) return; el.classList.remove('input-empty','input-valid','input-invalid'); if(tone) el.classList.add(tone); };
       const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
       const mmToM3=mm=>(Number(mm)||0)*(CAL.MM_EQ_M3_DEN/CAL.MM_EQ_M3_NUM); const m3ToL=m3=>(Number(m3)||0)*1000; const m3ToMm=m3=>(Number(m3)||0)*(CAL.MM_EQ_M3_NUM/CAL.MM_EQ_M3_DEN);
       const hFromPh=ph=>Math.pow(10,-Math.min(14,Math.max(0,Number(ph)||0))); const ohFromPh=ph=>Math.pow(10,-(14-Math.min(14,Math.max(0,Number(ph)||0))));
@@ -225,7 +228,9 @@
         const l=num(lRaw), p=num(pRaw);
         if(lRaw===''||Number.isNaN(l)){lOk=false;lMsg=t('levelInvalid')} else if(l<1200){lOk=false;lMsg=t('levelLow')} else if(l>4000){lOk=false;lMsg=t('levelHigh')}
         if(pRaw===''||Number.isNaN(p)||p<0||p>14){pOk=false;pMsg=t('errPh')}
-        $('levelError').textContent=lMsg; $('phError').textContent=pMsg; $('tankLevelMm').classList.toggle('input-invalid',!lOk); $('tankPh').classList.toggle('input-invalid',!pOk);
+        $('levelError').textContent=lMsg; $('phError').textContent=pMsg;
+        setFieldTone($('tankLevelMm'), lRaw===''?'input-empty':(lOk?'input-valid':'input-invalid'));
+        setFieldTone($('tankPh'), pRaw===''?'input-empty':(pOk?'input-valid':'input-invalid'));
         if(lOk) state.tankState.levelMm=l; if(pOk) state.tankState.pH=p; state.tankState.volumeM3=mmToM3(state.tankState.levelMm);
         $('estimatedVolume').textContent=lOk?t('estimatedVolume').replace('{value}',fmt(state.tankState.volumeM3,2)):t('estimatedVolume').replace('{value}','--');
         return lOk&&pOk;
@@ -253,13 +258,24 @@
         const names=['LH','BPED','IX','LS'];
         $('effluentList').innerHTML=state.effluents.map((e,i)=>`<div class="effluent-item"><div class="grid grid-3"><div class="field"><label>${t('effluentName')} ${i+1}</label><select data-ix="${i}" data-f="name">${names.map(n=>`<option value="${n}" ${e.name===n?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>${t('effVol')}</label><input data-ix="${i}" data-f="volumeM3" type="number" min="0" step="0.01" placeholder="Ej. 10.50" value="${Number.isFinite(Number(e.volumeM3))?e.volumeM3:''}" /></div><div class="field"><label>${t('effPh')}</label><input data-ix="${i}" data-f="pH" type="number" min="0" max="14" step="0.01" placeholder="Ej. 6.80" value="${Number.isFinite(Number(e.pH))?e.pH:''}" /></div></div><div class="notice">${t('effTypeAuto')}: <b class="eff-kind" data-kind-ix="${i}">${t(effluentKind(Number(e.pH)||7))}</b>${i>0?` &nbsp; <button class='btn' data-remove='${i}' type='button'>-</button>`:''}</div></div>`).join('');
 
-        $('effluentList').querySelectorAll('select[data-f="name"]').forEach(el=>el.addEventListener('change',e=>{const ix=Number(e.target.dataset.ix); state.effluents[ix].name=e.target.value; renderResults();}));
+        $('effluentList').querySelectorAll('select[data-f="name"]').forEach(el=>{
+          setFieldTone(el,'input-valid');
+          el.addEventListener('change',e=>{const ix=Number(e.target.dataset.ix); state.effluents[ix].name=e.target.value; setFieldTone(e.target,'input-valid'); renderResults();});
+        });
         $('effluentList').querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{
           const ix=Number(e.target.dataset.ix), f=e.target.dataset.f, raw=e.target.value;
           state.effluents[ix][f]=raw===''?NaN:num(raw);
+          const v=num(raw);
+          const ok=f==='pH' ? (Number.isFinite(v)&&v>=0&&v<=14) : (Number.isFinite(v)&&v>=0);
+          setFieldTone(e.target, raw===''?'input-empty':(ok?'input-valid':'input-invalid'));
           if(f==='pH'){ const kindEl=$('effluentList').querySelector(`[data-kind-ix="${ix}"]`); if(kindEl) kindEl.textContent=t(effluentKind(Number(state.effluents[ix].pH)||7)); }
           renderResults();
         }));
+        $('effluentList').querySelectorAll('input[data-f]').forEach(el=>{
+          const raw=el.value.trim(), f=el.dataset.f, v=num(raw);
+          const ok=f==='pH' ? (Number.isFinite(v)&&v>=0&&v<=14) : (Number.isFinite(v)&&v>=0);
+          setFieldTone(el, raw===''?'input-empty':(ok?'input-valid':'input-invalid'));
+        });
         $('effluentList').querySelectorAll('[data-remove]').forEach(el=>el.addEventListener('click',()=>{ state.effluents.splice(Number(el.dataset.remove),1); renderEffluents(); renderNeutralization(); renderResults(); }));
       }
 
@@ -444,6 +460,10 @@
         $('effluentNameAuto').value=getAutoEffluentName(basePh);
         if(!Number.isFinite(num(state.neutralization.referencePh))){ state.neutralization.referencePh=basePh<7?12:1; } if(document.activeElement!==$('neutralizerPh')) $('neutralizerPh').value=Number.isFinite(num(state.neutralization.referencePh))?String(state.neutralization.referencePh):'';
         $('effluentConfig').style.display=(selectedMode==='chemical')?'none':'grid'; $('neutralizerPh').disabled=(selectedMode==='chemical');
+        setFieldTone($('maxEffluentM3'),'input-valid');
+        const neutralRaw=$('neutralizerPh').value.trim(), neutralVal=num(neutralRaw);
+        const neutralOk=Number.isFinite(neutralVal)&&neutralVal>=0&&neutralVal<=14;
+        setFieldTone($('neutralizerPh'), selectedMode==='chemical' ? '' : (neutralRaw===''?'input-empty':(neutralOk?'input-valid':'input-invalid')));
         [$('modeCombinedBtn'),$('modeEffBtn'),$('modeChemBtn')].forEach(b=>b.classList.toggle('active',b.dataset.mode===selectedMode));
         $('modeHints').innerHTML=[{mode:'combined'},{mode:'effluent'},{mode:'chemical'}].map(x=>{ const rec=x.mode===state.neutralizationStrategy.recommendedMode; const txt=rec?t('recommendedLabel'):''; const cls=rec?'recommended':''; return `<div class="mode-hint ${cls}">${txt}</div>`; }).join('');
         $('mixedStateCalcCard').style.display=isReception?'block':'none';
@@ -493,7 +513,7 @@
         $('overflowWarn').textContent=n.result.finalTankLevelMm>CAL.TANK_MAX_MM?t('overflow'):'';
       }
 
-      function buildSelects(){ $('naohPct').innerHTML=[10,20,30,40,50].map(v=>`<option value='${v}'>${v}%</option>`).join(''); $('h2so4Pct').innerHTML=[98,90,80,70,60,50,40,30].map(v=>`<option value='${v}'>${v}%</option>`).join(''); $('naohPct').value=state.chemicals.naohPct; $('h2so4Pct').value=state.chemicals.h2so4Pct; }
+      function buildSelects(){ $('naohPct').innerHTML=[10,20,30,40,50].map(v=>`<option value='${v}'>${v}%</option>`).join(''); $('h2so4Pct').innerHTML=[98,90,80,70,60,50,40,30].map(v=>`<option value='${v}'>${v}%</option>`).join(''); $('naohPct').value=state.chemicals.naohPct; $('h2so4Pct').value=state.chemicals.h2so4Pct; setFieldTone($('naohPct'),'input-valid'); setFieldTone($('h2so4Pct'),'input-valid'); }
 
       const tutorialCatalog={
         unico:[
@@ -638,7 +658,7 @@
         $('btnSummary').textContent=t('summaryBtn');
         $('maxEffluentM3').value=String(state.neutralizationStrategy.maxEffluentM3);
         if($('tankLevelMm').value.trim()!==''||$('tankPh').value.trim()!==''){ validateState(); }
-        else { $('levelError').textContent=''; $('phError').textContent=''; $('estimatedVolume').textContent=t('estimatedVolume').replace('{value}','--'); $('tankLevelMm').classList.remove('input-invalid'); $('tankPh').classList.remove('input-invalid'); }
+        else { $('levelError').textContent=''; $('phError').textContent=''; $('estimatedVolume').textContent=t('estimatedVolume').replace('{value}','--'); setFieldTone($('tankLevelMm'),'input-empty'); setFieldTone($('tankPh'),'input-empty'); }
         renderEffluents(); renderNeutralization(); renderResults();
       }
 
@@ -716,7 +736,7 @@
           $('btnNext').disabled=hasAny?!validateState():true;
           if(!hasAny){
             $('levelError').textContent=''; $('phError').textContent='';
-            $('tankLevelMm').classList.remove('input-invalid'); $('tankPh').classList.remove('input-invalid');
+            setFieldTone($('tankLevelMm'),'input-empty'); setFieldTone($('tankPh'),'input-empty');
           }
         } else if(id==='neutralization'){
           renderNeutralization();
