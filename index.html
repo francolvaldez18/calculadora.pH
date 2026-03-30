@@ -116,7 +116,7 @@
           </div>
         </section>
 
-        <section class="screen" id="screen-task"><h3 data-i18n="taskTitle"></h3><div class="choice-buttons"><button class="choice-button" id="taskConditioningBtn" data-task="Ajuste de pH" type="button"></button><button class="choice-button" id="taskReceptionBtn" data-task="Recepción de Efluentes" type="button"></button><button class="choice-button" id="taskTutorialIbcBtn" type="button" style="display:none;"></button></div><div class="cards" style="margin-top:10px;"><div class="card"><h4 data-i18n="taskConditioning"></h4><div class="small" data-i18n="taskConditioningHelp"></div></div><div class="card"><h4 data-i18n="taskReception"></h4><div class="small" data-i18n="taskReceptionHelp"></div></div></div></section>
+        <section class="screen" id="screen-task"><h3 data-i18n="taskTitle"></h3><div class="choice-buttons"><button class="choice-button" id="taskConditioningBtn" data-task="Ajuste de pH" type="button"></button><button class="choice-button" id="taskReceptionBtn" data-task="Recepción de Efluentes" type="button"></button></div><div class="cards" style="margin-top:10px;"><div class="card"><h4 data-i18n="taskConditioning"></h4><div class="small" data-i18n="taskConditioningHelp"></div></div><div class="card"><h4 data-i18n="taskReception"></h4><div class="small" data-i18n="taskReceptionHelp"></div></div></div></section>
 
         <section class="screen" id="screen-state">
           <div class="top-row"><h3 data-i18n="tankTitleWWB"></h3><button class="btn" id="settingsBtn" type="button">⚙️ <span data-i18n="settingsBtn"></span></button></div>
@@ -529,27 +529,15 @@
           {screen:'effluents',target:'effluentList',text:'Completar volumen y pH de cada corriente. Al completar, desaparece el pop up y queda Siguiente en amarillo.'},
           {screen:'neutralization',target:'mixedStateCalcCard',text:'Verificar el estado de mezcla antes de neutralizar.'},
           {screen:'results',target:'mixedStateResultsCard',text:'Confirmar la mezcla y luego la neutralización final.'}
-        ],
-        ibc:[
-          {screen:'task',target:'taskTutorialIbcBtn',text:'Modo IBC: recorrido de referencia para cargas tipo IBC.'},
-          {screen:'state',target:'settingsBtn',text:'Abrir ajustes para revisar concentraciones químicas.'},
-          {screen:'state',target:'naohPct',text:'Configurar concentración de NaOH si corresponde.'},
-          {screen:'state',target:'h2so4Pct',text:'Configurar concentración de H2SO4 si corresponde.'},
-          {screen:'results',target:'btnSummary',text:'Usar Resumen para validar y copiar datos del cálculo.'}
         ]
       };
 
       function setTaskTutorialSelectionMode(on){
         state.tutorial.selecting=on;
-        const base=[$('taskConditioningBtn'),$('taskReceptionBtn'),$('taskTutorialIbcBtn')];
+        const base=[$('taskConditioningBtn'),$('taskReceptionBtn')];
         if(on){
-          $('taskTutorialIbcBtn').style.display='block';
-          $('taskConditioningBtn').textContent='Modo Único';
-          $('taskReceptionBtn').textContent='Modo Múltiple';
-          $('taskTutorialIbcBtn').textContent='Modo IBC';
           base.forEach(b=>{ b.classList.add('tutorial-mode'); b.classList.remove('active'); });
         }else{
-          $('taskTutorialIbcBtn').style.display='none';
           base.forEach(b=>{ b.classList.remove('tutorial-mode'); b.classList.remove('active'); });
           renderI18n();
         }
@@ -649,7 +637,6 @@
         if(!state.tutorial.selecting){
           $('taskReceptionBtn').textContent=t('taskReception');
           $('taskConditioningBtn').textContent=t('taskConditioning');
-          $('taskTutorialIbcBtn').style.display='none';
         }
         [$('taskReceptionBtn'),$('taskConditioningBtn')].forEach(b=>b.classList.toggle('active',b.dataset.task===state.selectedTask));
         $('modeCombinedBtn').textContent=t('modeCombined');
@@ -666,15 +653,12 @@
         document.querySelectorAll('.language-button').forEach(btn=>btn.addEventListener('click',()=>{state.selectedLanguage=btn.dataset.lang;renderI18n();}));
         $('welcomeNextButton').addEventListener('click',()=>show('task'));
         $('taskConditioningBtn').addEventListener('click',()=>{
-          if(state.tutorial.selecting){ $('taskConditioningBtn').classList.add('active'); startTutorial('unico'); return; }
+          if(state.tutorial.selecting){ state.selectedTask='Ajuste de pH'; $('taskConditioningBtn').classList.add('active'); startTutorial('unico'); return; }
           state.selectedTask='Ajuste de pH'; renderI18n();
         });
         $('taskReceptionBtn').addEventListener('click',()=>{
-          if(state.tutorial.selecting){ $('taskReceptionBtn').classList.add('active'); startTutorial('multiple'); return; }
+          if(state.tutorial.selecting){ state.selectedTask='Recepción de Efluentes'; $('taskReceptionBtn').classList.add('active'); startTutorial('multiple'); return; }
           state.selectedTask='Recepción de Efluentes'; renderI18n();
-        });
-        $('taskTutorialIbcBtn').addEventListener('click',()=>{
-          if(state.tutorial.selecting){ $('taskTutorialIbcBtn').classList.add('active'); startTutorial('ibc'); }
         });
         $('tutorialBtn').addEventListener('click',()=>{ show('task'); setTaskTutorialSelectionMode(true); });
         $('tourOverlay').addEventListener('click',()=>{});
