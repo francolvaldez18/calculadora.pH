@@ -116,7 +116,7 @@
           </div>
         </section>
 
-        <section class="screen" id="screen-task"><h3 data-i18n="taskTitle"></h3><div class="choice-buttons"><button class="choice-button" id="taskConditioningBtn" data-task="Ajuste de pH" type="button"></button><button class="choice-button" id="taskReceptionBtn" data-task="Recepción de Efluentes" type="button"></button></div><div class="cards" style="margin-top:10px;"><div class="card"><h4 data-i18n="taskConditioning"></h4><div class="small" data-i18n="taskConditioningHelp"></div></div><div class="card"><h4 data-i18n="taskReception"></h4><div class="small" data-i18n="taskReceptionHelp"></div></div></div></section>
+        <section class="screen" id="screen-task"><h3 data-i18n="taskTitle"></h3><div class="choice-buttons"><button class="choice-button" id="taskConditioningBtn" data-task="Ajuste de pH" type="button"></button><button class="choice-button" id="taskReceptionBtn" data-task="Recepción de Efluentes" type="button"></button></div><div class="card" id="taskHelpCard" style="margin-top:10px;display:none;"><h4 id="taskHelpTitle"></h4><div class="small" id="taskHelpText"></div></div></section>
 
         <section class="screen" id="screen-state">
           <div class="top-row"><h3 data-i18n="tankTitleWWB"></h3><button class="btn" id="settingsBtn" type="button">⚙️ <span data-i18n="settingsBtn"></span></button></div>
@@ -222,6 +222,14 @@
       function effluentKind(ph){ if(ph>7) return 'basic'; if(ph<7) return 'acidic'; return 'neutral'; }
       function renderTabs(){ const m={language:'tabLanguage',task:'tabTask',state:'tabState',effluents:'tabEff',neutralization:'tabNeu',results:'tabRes'}; $('tabs').innerHTML=flow().map(s=>`<span class="tab ${s===currentScreen?'active':''}">${t(m[s])}</span>`).join(''); }
       function setError(msg){ $('screenError').textContent=msg; }
+      function renderTaskHelp(){
+        const card=$('taskHelpCard');
+        if(!state.selectedTask){ card.style.display='none'; return; }
+        const isConditioning=state.selectedTask==='Ajuste de pH';
+        $('taskHelpTitle').textContent=t(isConditioning?'taskConditioning':'taskReception');
+        $('taskHelpText').textContent=t(isConditioning?'taskConditioningHelp':'taskReceptionHelp');
+        card.style.display='block';
+      }
       function validateState(){
         const lRaw=$('tankLevelMm').value.trim(), pRaw=$('tankPh').value.trim();
         let lOk=true,pOk=true,lMsg='',pMsg='';
@@ -638,6 +646,7 @@
           $('taskReceptionBtn').textContent=t('taskReception');
           $('taskConditioningBtn').textContent=t('taskConditioning');
         }
+        renderTaskHelp();
         [$('taskReceptionBtn'),$('taskConditioningBtn')].forEach(b=>b.classList.toggle('active',b.dataset.task===state.selectedTask));
         $('modeCombinedBtn').textContent=t('modeCombined');
         $('modeEffBtn').textContent=t('modeEffluent');
