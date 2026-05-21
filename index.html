@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora pH</title>
+    <style>
+      :root { --overlay-color: rgba(255,255,255,.76); --panel-color: rgba(255,255,255,.88); --text-primary:#093a63; --text-secondary:#325f83; --button-bg:#0d6eaa; --button-bg-hover:#1285cb; --border:rgba(73,119,153,.25); --danger:#b8302d; --warning:#9b6200; --font-bump:0px; --ui-compact:0.82; }
+      *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:"Segoe UI","Roboto",Arial,sans-serif;color:var(--text-primary);background:#e9edf2}
+      .app-screen{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(1rem * var(--ui-compact)) calc(1.25rem * var(--ui-compact)) calc(1.6rem * var(--ui-compact));overflow:hidden}
+      .background-image{position:absolute;inset:0;z-index:-3;background:radial-gradient(circle at 20% 20%, rgba(13,110,170,.12), transparent 35%),radial-gradient(circle at 80% 40%, rgba(13,110,170,.08), transparent 38%),linear-gradient(180deg,#f5f7fa 0%,#e8edf3 100%)}
+      .background-logo{position:absolute;inset:0;z-index:-2;opacity:.12;background:none}
+      .overlay{position:absolute;inset:0;background:var(--overlay-color);z-index:-1}
+      .top-logo{position:relative;width:min(calc(225px * var(--ui-compact)),50vw);max-height:calc(80px * var(--ui-compact));object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 3px 6px rgba(5,43,72,.1));z-index:2;pointer-events:none;margin:0 0 .45cm}
+      .below-work-row{width:min(840px,100%);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:.45rem;position:relative;z-index:2}
+      .flags-row{display:flex;align-items:center;justify-content:center;gap:1cm;margin:0}
+      .flag-img{width:min(86px,19vw);height:auto;border-radius:4px;border:1px solid rgba(73,119,153,.25);box-shadow:0 3px 8px rgba(9,58,99,.12)}
+      .content{position:relative;z-index:1;width:min(840px,100%);background:var(--panel-color);border:1px solid var(--border);border-radius:18px;padding:clamp(1rem,2.1vw,1.45rem);box-shadow:0 10px 20px rgba(9,58,99,.08);text-align:left}
+      .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}.tab{border:1px solid rgba(13,110,170,.25);padding:7px 11px;border-radius:999px;font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary);font-weight:600;background:rgba(255,255,255,.75)}.tab.active{color:var(--button-bg);background:rgba(13,110,170,.13);border-color:rgba(13,110,170,.42)}
+      .screen{display:none}.screen.active{display:block} h3{margin:0 0 10px;font-size:calc(.84rem + var(--font-bump))}
+      .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      .field{display:flex;flex-direction:column;gap:5px} label{font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary);font-weight:600}
+      input,select{border:1px solid rgba(73,119,153,.28);border-radius:10px;padding:7px 8px;background:#fff;color:var(--text-primary);width:100%;transition:background-color .18s ease,border-color .18s ease}
+      .readonly-output{border:none;border-radius:12px;padding:.68rem .9rem;font-size:calc(.84rem + var(--font-bump));font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));width:100%;text-align:left;box-shadow:0 8px 16px rgba(9,58,99,.2);opacity:.9}.readonly-output:disabled{cursor:default;opacity:1;color:#fff}
+      .input-empty{background:rgba(255, 243, 205, .55);border-color:rgba(211,158,0,.5)}
+      .input-valid{background:rgba(198, 239, 206, .55);border-color:rgba(91, 161, 85, .55)}
+      .input-invalid{border:2px solid var(--danger);background:rgba(255, 199, 206, .55)}.btn{border:none;border-radius:12px;padding:.68rem .9rem;font-size:calc(.84rem + var(--font-bump));font-weight:700;color:#fff;background:linear-gradient(180deg,var(--button-bg-hover),var(--button-bg));cursor:pointer;box-shadow:0 8px 16px rgba(9,58,99,.2)}.btn:disabled{opacity:.55;cursor:not-allowed}
+      .choice-buttons{display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:.8rem}.mode-choices{grid-template-columns:repeat(3,minmax(120px,1fr));}.added-chip{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff;border-color:#0d6eaa}.added-chip b{color:#fff;font-size:1.1rem}.inverted-block,#additionCard{background:linear-gradient(180deg,#1285cb,#0d6eaa)!important;border-color:#0d6eaa!important;color:#fff!important}#additionCard h4{font-size:calc(.95rem + var(--font-bump));margin-bottom:10px;color:#fff!important}#additionCard .metric-chip,#additionCard .metric-chip b,#additionCard .plus-center{color:#fff!important}#additionCard .metric-chip{font-size:calc(.86rem + var(--font-bump))}#additionCard .metric-chip{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.45)!important}#additionCard .card{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.45)!important}.choice-button{border:2px solid #0d6eaa;border-radius:12px;padding:.78rem .88rem;font-size:clamp(.88rem,1.45vw,.96rem);font-weight:800;color:#0d6eaa;background:#fff;box-shadow:0 5px 10px rgba(9,58,99,.12);cursor:pointer;text-align:center;min-height:54px}.choice-button.active{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff}
+      .card{border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.84);padding:11px}.card h4{margin:0 0 6px;font-size:calc(.84rem + var(--font-bump));color:var(--button-bg)}.dose-card{text-align:center;margin-top:10px}.dose-card h4{display:none}.dose-type{font-size:calc(1.05rem + var(--font-bump));font-weight:700;color:var(--text-secondary)}.dose-value{font-size:1.85rem;font-weight:800;color:var(--button-bg);line-height:1.2}
+      .kpi{margin-top:10px;border:1px solid rgba(13,110,170,.35);border-radius:12px;background:rgba(13,110,170,.1);padding:12px}.kpi-label{font-size:calc(.84rem + var(--font-bump));color:var(--text-secondary)}.kpi-value{font-size:1.35rem;font-weight:800;color:var(--button-bg)}
+      .notice{margin-top:8px;font-size:calc(.88rem + var(--font-bump));color:var(--text-secondary);text-align:left}.error{margin-top:6px;font-size:calc(.85rem + var(--font-bump));color:var(--danger);text-align:left}.warn{color:var(--warning);font-weight:700}
+      .welcome-main{text-align:left;padding:clamp(.35rem,1.2vw,.7rem) 0}.welcome-main h2{margin:0;text-align:center;font-size:clamp(1rem,1.75vw,1.5rem);line-height:1.35}.welcome-description{margin:.75rem auto 0;max-width:70ch;text-align:center;color:var(--text-secondary);font-size:clamp(.78rem,1.02vw,.9rem);line-height:1.55}.language-label{margin-top:1rem;margin-bottom:.75rem;font-weight:600;color:#174e78;font-size:clamp(1rem,1.8vw,1.2rem);text-align:left}
+      .language-buttons{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:.9rem}.language-button{border:2px solid #0d6eaa;border-radius:12px;padding:.78rem .88rem;font-size:clamp(.88rem,1.7vw,.98rem);font-weight:800;color:#0d6eaa;background:#fff;box-shadow:0 8px 16px rgba(9,58,99,.2);cursor:pointer}.language-button.active{background:linear-gradient(180deg,#1285cb,#0d6eaa);color:#fff}
+      .welcome-actions{margin-top:.9rem;display:flex;justify-content:center}.welcome-next{min-width:min(280px,100%)} .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.settings-panel{display:none;margin-top:10px}.settings-panel.open{display:block}
+      .effluent-item{margin-top:12px;padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.65)}
+      .nav{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px}.nav-right{display:flex;gap:8px}.btn-summary{display:none}.results-flow{display:grid;gap:10px;margin-top:10px}.metric-chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.metric-chip{border:1px solid rgba(13,110,170,.34);border-radius:10px;background:rgba(255,255,255,.82);padding:.6rem .65rem;text-align:center;font-size:calc(.78rem + var(--font-bump));line-height:1.3}.metric-chip b{display:block;color:var(--button-bg);font-size:calc(.88rem + var(--font-bump));margin-top:.15rem}.mode-hints{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px;margin-top:6px}.mode-hint{font-size:calc(.74rem + var(--font-bump));text-align:center;color:var(--text-secondary)}.target-ph-buttons{display:grid;grid-template-columns:repeat(3,minmax(100px,1fr));gap:8px}.target-ph-note{font-size:calc(.72rem + var(--font-bump));color:var(--text-secondary);text-align:center}.mode-hint.recommended{color:#0b6c36;font-weight:800;text-transform:uppercase}.mode-hint.unavailable{color:var(--danger);font-weight:700}.metric-chips{width:100%}.strategy-top{grid-template-columns:repeat(3,minmax(0,1fr))}.strategy-bottom{grid-template-columns:minmax(150px,220px) 1fr;align-items:end}.combined-split{display:grid;grid-template-columns:1fr;gap:8px;align-items:stretch}.plus-center{display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--button-bg)}.summary-list{display:grid;gap:2px}.summary-row{display:grid;grid-template-columns:minmax(140px,190px) 1fr;gap:8px;padding:2px 0;border-bottom:1px solid rgba(73,119,153,.12)}.summary-row:last-child{border-bottom:none}.summary-key{font-weight:700;color:var(--text-secondary)}.summary-copy-status{margin-right:auto;font-size:calc(.76rem + var(--font-bump));color:var(--text-secondary)}#summaryBody{font-size:calc(.74rem + var(--font-bump));line-height:1.28}.summary-compact .card{padding:8px 10px}
+      .developer-launch{display:flex;justify-content:flex-end;justify-self:end;align-items:center;gap:.45rem}
+      .developer-btn{border:1px solid rgba(13,110,170,.35);border-radius:10px;padding:.42rem .8rem;background:rgba(255,255,255,.82);color:var(--button-bg);font-weight:700;cursor:pointer;font-size:calc(.82rem + var(--font-bump));box-shadow:0 4px 10px rgba(9,58,99,.12)}
+      .tutorial-btn {
+        border: 1px solid #d39e00;
+        border-radius: 10px;
+        padding: .42rem .8rem;
+        background: #fff3cd;
+        color: #856404;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 13px;
+        box-shadow: 0 4px 10px rgba(0,0,0,.12);
+      }
+      .choice-button.tutorial-mode {
+        border: 2px solid #d39e00;
+        background: #fff3cd;
+        color: #856404;
+      }
+      .choice-button.tutorial-mode.active {
+        background: linear-gradient(180deg, #ffd54f, #ffc107);
+        color: #5c4500;
+        border-color: #d39e00;
+      }
+      .btn.tutorial-next-ready{
+        background: linear-gradient(180deg, #ffd54f, #ffc107);
+        color: #5c4500;
+        border-color: #d39e00;
+      }
+      .overlay-tour {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(3px);
+        z-index: 9998;
+        pointer-events: none;
+      }
+      .tour-highlight {
+        position: relative;
+        z-index: 9999;
+        box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.9);
+        border-radius: 10px;
+      }
+      .tour-popup {
+        position: fixed;
+        max-width: 260px;
+        background: #fff3cd;
+        border: 1px solid #ffe69c;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 13px;
+        color: #664d03;
+        z-index: 10000;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      }
+      .tour-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+      .tour-actions .btn{padding:.45rem .65rem}
+      .dev-modal{position:fixed;inset:0;background:rgba(9,58,99,.36);display:none;align-items:center;justify-content:center;padding:1rem;z-index:20}
+      .dev-modal.open{display:flex}
+      .dev-dialog{width:min(520px,96vw);background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 35px rgba(9,58,99,.2);padding:1rem 1.1rem}
+      .dev-dialog h4{margin:0 0 .6rem;color:var(--button-bg);font-size:calc(1rem + var(--font-bump))}
+      .dev-dialog p{margin:.2rem 0;color:var(--text-primary);font-size:calc(.84rem + var(--font-bump));line-height:1.45}
+      .dev-actions{display:flex;justify-content:flex-end;gap:.6rem;margin-top:.8rem}
+      @media (max-width:860px){.grid,.grid-3,.cards,.choice-buttons,.language-buttons,.mode-choices,.strategy-top,.strategy-bottom,.combined-split{grid-template-columns:1fr}.app-screen{justify-content:center;padding-top:.65rem}.top-logo{margin-bottom:.45cm;width:min(188px,58vw)}.below-work-row{grid-template-columns:1fr;row-gap:.5rem;margin-top:.45rem}.flags-row{gap:1cm}.developer-launch{justify-self:end}.flag-img{width:min(80px,26vw)}.metric-chips{grid-template-columns:repeat(3,minmax(0,1fr))}.mode-hints{grid-template-columns:1fr}.target-ph-buttons{grid-template-columns:repeat(3,minmax(88px,1fr))}.nav,.nav-right{flex-direction:column;align-items:stretch}}
+    </style>
+  </head>
+  <body>
+    <main class="app-screen">
+      <div class="background-image" aria-hidden="true"></div>
+      <div class="background-logo" aria-hidden="true"></div>
+      <div class="overlay" aria-hidden="true"></div>
+      <img class="top-logo" alt="Logo POSCO" src="https://upload.wikimedia.org/wikipedia/commons/0/05/POSCO_logo.svg" onerror="this.onerror=null;this.src='POSCO_logo.svg';" />
+      <section class="content">
+        <div class="tabs" id="tabs"></div>
+
+        <section class="screen" id="screen-language">
+          <div class="welcome-main">
+            <h2 id="main-title"></h2><p class="welcome-description" id="main-description"></p><p class="language-label" id="language-label"></p>
+            <div class="language-buttons"><button class="language-button" id="langBtnEn" data-lang="en"></button><button class="language-button" id="langBtnEs" data-lang="es"></button><button class="language-button" id="langBtnKo" data-lang="ko"></button></div>
+            <div class="welcome-actions"><button class="btn welcome-next" id="welcomeNextButton" type="button"></button></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-task"><h3 data-i18n="taskTitle"></h3><div class="choice-buttons"><button class="choice-button" id="taskConditioningBtn" data-task="Ajuste de pH" type="button"></button><button class="choice-button" id="taskReceptionBtn" data-task="Recepción de Efluentes" type="button"></button></div><div class="card" id="taskHelpCard" style="margin-top:10px;display:none;"><h4 id="taskHelpTitle"></h4><div class="small" id="taskHelpText"></div></div></section>
+
+        <section class="screen" id="screen-state">
+          <div class="top-row"><h3 data-i18n="tankTitleWWB"></h3><button class="btn" id="settingsBtn" type="button">⚙️ <span data-i18n="settingsBtn"></span></button></div>
+          <div class="grid grid-3">
+            <div class="field"><label data-i18n="levelMm"></label><input id="tankLevelMm" type="number" step="0.01" placeholder="1200 - 4000" /><div id="levelError" class="error"></div></div>
+            <div class="field"><label data-i18n="estimatedVolumeLabel"></label><button id="estimatedVolume" class="readonly-output" type="button" disabled></button><div class="notice" data-i18n="volumeHint"></div></div>
+            <div class="field"><label data-i18n="phLabel"></label><input id="tankPh" type="number" step="0.01" placeholder="0 - 14" /><div id="phError" class="error"></div></div>
+          </div>
+          <div class="settings-panel" id="settingsPanel">
+            <h3 data-i18n="chemicalsOptionalTitle"></h3>
+            <div class="grid"><div class="field"><label data-i18n="naohConcentration"></label><select id="naohPct"></select></div><div class="field"><label data-i18n="h2so4Concentration"></label><select id="h2so4Pct"></select></div></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-effluents">
+          <div class="top-row"><h3 data-i18n="effluentsTitle"></h3><button class="btn" id="addEffluentBtn" type="button">+ <span data-i18n="addEffluent"></span></button></div>
+          <div id="effluentList"></div>
+        </section>
+
+        <section class="screen" id="screen-neutralization">
+          <h3 data-i18n="neutralizationMode"></h3>
+          <div class="card" id="mixedStateCalcCard" style="display:none;margin-top:10px;">
+            <h4 data-i18n="mixedStateTitle"></h4>
+            <div id="mixedStateCalcSummary"></div>
+          </div>
+          <div class="card" id="modeBlock" style="margin-top:10px;">
+            <div class="field"><label data-i18n="targetPhLabel"></label><div class="target-ph-buttons"><button class="choice-button" id="targetPh7" data-target-ph="7" type="button">7.0</button><button class="choice-button" id="targetPh8" data-target-ph="8" type="button">8.0</button><button class="choice-button" id="targetPh85" data-target-ph="8.5" type="button">8.5</button></div><div class="target-ph-buttons" style="margin-top:6px;"><div class="target-ph-note" data-i18n="targetPhNote7"></div><div class="target-ph-note" data-i18n="targetPhNote8"></div><div class="target-ph-note" data-i18n="targetPhNote85"></div></div></div>
+            <div class="field" style="margin-top:8px;"><label data-i18n="modeLabel"></label><div class="choice-buttons mode-choices"><button class="choice-button" id="modeCombinedBtn" data-mode="combined" type="button"></button><button class="choice-button" id="modeEffBtn" data-mode="effluent" type="button"></button><button class="choice-button" id="modeChemBtn" data-mode="chemical" type="button"></button></div><div class="mode-hints" id="modeHints"></div></div>
+            <div class="grid strategy-top" id="effluentConfig" style="margin-top:8px;">
+              <div class="field"><label data-i18n="effluentNameLabel"></label><input id="effluentNameAuto" type="text" readonly /></div>
+              <div class="field"><label data-i18n="effluentVolumeLabel"></label><select id="maxEffluentM3"><option value="5">5 m³</option><option value="10">10 m³</option><option value="15">15 m³</option><option value="20">20 m³</option><option value="25">25 m³</option><option value="30">30 m³</option></select></div>
+              <div class="field"><label data-i18n="neutralizerPhLabel"></label><input id="neutralizerPh" type="number" min="0" max="14" step="0.01" placeholder="0 - 14" /><div id="neutralizerPhError" class="error"></div></div>
+            </div>
+            <div class="notice" id="modeCriterion"></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-results">
+          <h3 data-i18n="resultsTitle"></h3>
+          <div class="results-flow" id="receptionFlow"><div class="card"><h4 data-i18n="stateCard"></h4><div id="afterEffluentsSummary"></div></div><div class="card" id="mixedStateResultsCard" style="display:none;"><h4 data-i18n="mixedStateTitle"></h4><div id="mixedStateResultsSummary"></div></div><div class="card inverted-block" id="additionCard"><h4 id="additionTitle" data-i18n="stageAdditionTitle"></h4><div id="additionSummary"></div></div><div class="card"><h4 data-i18n="finalTankStateTitle"></h4><div id="finalAfterNeutralizationSummary"></div></div></div>
+          <div class="notice" id="conditioningNote" style="display:none;"></div><div class="notice warn" id="overflowWarn" style="display:none;"></div>
+        </section>
+
+        <div class="nav" id="globalNav"><button class="btn" id="btnHome" data-i18n="homeBtn"></button><div class="nav-right"><button class="btn" id="btnBack" data-i18n="backBtn"></button><button class="btn" id="btnNext" data-i18n="nextBtn"></button><button class="btn btn-summary" id="btnSummary" data-i18n="summaryBtn" type="button"></button></div></div>
+        <div id="screenError" class="error"></div>
+      </section>
+      <div class="below-work-row">
+        <div></div>
+        <div class="flags-row" aria-hidden="true">
+          <img class="flag-img" alt="Bandera de Corea del Sur" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Flag_of_South_Korea.svg/960px-Flag_of_South_Korea.svg.png" />
+          <img class="flag-img" alt="Bandera de Argentina" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/960px-Flag_of_Argentina.svg.png" />
+        </div>
+        <div class="developer-launch" id="developerLaunchWrap"><button class="developer-btn" id="developerBtn" type="button" data-i18n="developerBtn"></button><button class="tutorial-btn" id="tutorialBtn" type="button">Tutorial</button></div>
+      </div>
+    </main>
+    <div id="tourOverlay" class="overlay-tour" style="display:none;"></div>
+    <div id="tourPopup" class="tour-popup" style="display:none;">
+      <div id="tourPopupText"></div>
+      <div class="tour-actions">
+        <button class="btn" id="tourPrevBtn" type="button">Anterior</button>
+        <button class="btn" id="tourNextBtn" type="button">Siguiente</button>
+        <button class="btn" id="tourFinishBtn" type="button">Finalizar</button>
+      </div>
+    </div>
+
+    <div class="dev-modal" id="devModal" aria-hidden="true" role="dialog" aria-labelledby="devTitle">
+      <div class="dev-dialog">
+        <h4 id="devTitle" data-i18n="developerBtn"></h4>
+        <p><strong>Valdez Franco Leonardo</strong></p>
+        <p>POSCO LH Production Dept. - Utilities - Güemes - Salta - Argentina</p>
+        <p>LinkedIn: <a href="https://www.linkedin.com/in/francolvaldez/" target="_blank" rel="noopener noreferrer">https://www.linkedin.com/in/francolvaldez/</a></p>
+        <div class="dev-actions"><button class="btn" id="devCloseBtn" type="button" data-i18n="closeBtn"></button></div>
+      </div>
+    </div>
+
+    <div class="dev-modal" id="summaryModal" aria-hidden="true" role="dialog" aria-labelledby="summaryTitle">
+      <div class="dev-dialog">
+        <h4 id="summaryTitle" data-i18n="summaryTitle"></h4>
+        <div id="summaryBody"></div>
+        <div class="dev-actions"><div id="summaryCopyStatus" class="summary-copy-status"></div><button class="btn" id="summaryCopyBtn" type="button" data-i18n="copyBtn"></button><button class="btn" id="summaryCloseBtn" type="button" data-i18n="closeBtn"></button></div>
+      </div>
+    </div>
+
+    <script>
+      const CAL={MM_EQ_M3_NUM:166.66,MM_EQ_M3_DEN:10,PH_TARGET:7,TANK_MAX_MM:4000,PM_NAOH:40,PM_H2SO4:98.079,naohDensity:{10:1.11,20:1.22,30:1.33,40:1.43,50:1.53},h2so4Density:{98:1.84,90:1.8,80:1.73,70:1.61,60:1.5,50:1.4,40:1.3,30:1.22}};
+      CAL.M3_PER_MM=CAL.MM_EQ_M3_DEN/CAL.MM_EQ_M3_NUM; CAL.MM_PER_M3=CAL.MM_EQ_M3_NUM/CAL.MM_EQ_M3_DEN;
+      const tr={
+        es:{taskTitle:'Seleccione una tarea',taskReception:'Recepción de efluentes',taskConditioning:'Ajuste pH',taskConditioningHelp:'Usar cuando solo necesitás corregir el pH de la pileta WWB con químico o efluente neutralizante.',taskReceptionHelp:'Usar cuando ingresan efluentes a WWB: primero mezcla/estado final y luego cálculo de neutralización.',tankTitleWWB:'Estado inicial de la pileta WWB.',levelMm:'Nivel (mm)',phLabel:'pH',volumeHint:'Referencia : 10 m³ = 166.66 mm',estimatedVolumeLabel:'Volumen estimado (m³)',estimatedVolume:'{value}',settingsBtn:'Ajustes',chemicalsOptionalTitle:'Químicos (opcional)',naohConcentration:'Concentración NaOH (% p/p)',h2so4Concentration:'Concentración H2SO4 (% p/p)',effluentsTitle:'Efluentes de ingreso',addEffluent:'Agregar efluente',effluentName:'Efluente',effVol:'Volumen (m³)',effPh:'pH',effTypeAuto:'Tipo (automático)',acidic:'Ácido',basic:'Básico',neutral:'Neutro',resultsTitle:'Resultados',stateCard:'Estado inicial',mixedStateTitle:'Estado de la mezcla (Inicial + Efluente)',methodCard:'Método de neutralización',reagentCard:'Reactivo/Efluente requerido',calcCard:'Datos técnicos de cálculo',neutralizationMode:'Modo de neutralización',modeLabel:'Modo',modeCombined:'Efluente + Químico',modeEffluent:'Efluente',modeChemical:'Químico',modeChemicals:'Químicos',requiredAmount:'Cantidad estimada requerida',idealLegend:'El cálculo corresponde a una estimación estequiométrica ideal y no contempla alcalinidad, buffers ni reacciones secundarias.',homeBtn:'Inicio',backBtn:'Volver',nextBtn:'Siguiente',tabLanguage:'Idioma',tabTask:'Tarea',tabState:'Estado',tabEff:'Efluentes',tabNeu:'Cálculo',tabRes:'Resultados',errSelectTask:'Seleccione una tarea.',errPh:'El pH debe estar entre 0 y 14.',levelLow:'La pileta tiene nivel bajo.',levelHigh:'La pileta está muy alta.',levelInvalid:'Ingrese un valor numérico válido para nivel.',nearNeutral:'pH cercano a 7: ajuste mínimo o no requerido.',species:'Especie neutralizada',eqNeutralize:'Equivalentes a neutralizar',methodCalc:'Método',overflow:'Advertencia: el nivel proyectado supera la altura máxima de la pileta.',neutralizerPhLH:'pH del efluente LH (base)',neutralizerPhIX:'pH del efluente IX (ácido)',invalidNeutralizerPh:'Ingrese pH válido entre 0 y 14.',invalidReferenceType:'El pH de referencia no es coherente con el tipo de efluente seleccionado',invalidNeutralizingCapacity:'Capacidad neutralizante inválida (revisar pH de referencia)',stoichMethodText:'Estequiometría ideal con pH objetivo',typeLabel:'Tipo',concentrationLabel:'Concentración',referencePhLabel:'pH referencia',volumeLabel:'Volumen',levelDeltaLabel:'Δ nivel',projectedLevelLabel:'Nivel proyectado',welcomeTitle:'Calculadora pH - WWT - Utilities - Departamento de Producción LH Güemes',welcomeDescription:'Cálculo de reactivo de neutralización para la planta de tratamiento de aguas.',selectLanguageText:'Seleccionar idioma',langEnglish:'English',langSpanish:'Español',langKorean:'한국어',newTankLevel:'Altura nueva de la pileta',newTankPh:'pH nuevo de la pileta',conditioningPumpNote:'* Considerando que la adición de la bomba sumergible representa 2.5 m3.',calcError:'No se pudo calcular el resultado técnico.',minAdjustment:'Ajuste mínimo / no requerido.',conditioningDoseTitle:'Reactivo para neutralizar (L)',developerBtn:'Desarrollador',closeBtn:'Cerrar',copyBtn:'Copiar',copiedMsg:'Resumen copiado.',copyErrorMsg:'No se pudo copiar automáticamente.',summaryBtn:'Resumen',summaryTitle:'Resumen de cálculo',summaryInitial:'Estado inicial',summaryAdded:'Agregado',summaryFinal:'Estado final',summaryTaskLabel:'Tarea',summarySelectedModeLabel:'Modo seleccionado',summaryTargetPhLabel:'pH objetivo',summaryReferencePhLabel:'pH de referencia',summaryTheoreticalVolumeLabel:'Volumen teórico',summarySafetyFactorLabel:'Factor de seguridad',summaryRequiredVolumeLabel:'Volumen requerido',summaryPumpExtraLabel:'Adición de bomba',summaryIncomingEffluentsLabel:'Efluentes cargados',summaryNoEffluents:'Sin efluentes cargados.',summaryStepLabel:'Paso',summaryChemicalSettingsLabel:'Configuración química',stageAfterEffluentsTitle:'1) Estado final tras recibir efluentes',stageAdditionTitle:'Agregado de químico o efluente para neutralización',stageFinalTitle:'3) Estado final tras neutralización',equivalentHeightLabel:'Altura equivalente',recommendedLabel:'Recomendado',notAvailableLabel:'No disponible',notRecommendedLabel:'No recomendado',effluentAvailabilityLabel:'Disponibilidad de efluente',effluentNameLabel:'Nombre de efluente',maxEffluentLabel:'Volumen máximo de efluente',effluentVolumeLabel:'Volumen de efluente',neutralizerPhLabel:'pH del efluente',targetPhLabel:'pH objetivo',targetPhNote7:'Neutralización',targetPhNote8:'Neutralización + Concentraciones medias',targetPhNote85:'Neutralización + Concentraciones altas',criteriaLabel:'Criterio recomendado',yesLabel:'Sí',noLabel:'No',finalTankStateTitle:'Estado final de la pileta',effluentBlockTitle:'Efluente',chemicalBlockTitle:'Químico',intermediatePhLabel:'pH intermedio',finalPhLabel:'pH final',additionCombinedTitle:'Agregado de efluente + químico',additionEffluentTitle:'Agregado de efluente',additionChemicalTitle:'Agregado de químico'},
+        en:{taskTitle:'Select a task',taskReception:'Effluent reception',taskConditioning:'pH Adjustment',taskConditioningHelp:'Use this when you only need to correct WWB tank pH using chemical or neutralizing effluent.',taskReceptionHelp:'Use this when incoming effluents are received in WWB: first mixing/final state, then neutralization calculation.',tankTitleWWB:'Initial WWB tank state.',levelMm:'Level (mm)',phLabel:'pH',volumeHint:'Reference: 10 m³ = 166.66 mm',estimatedVolumeLabel:'Estimated volume (m³)',estimatedVolume:'{value}',settingsBtn:'Settings',chemicalsOptionalTitle:'Chemicals (optional)',naohConcentration:'NaOH concentration (% w/w)',h2so4Concentration:'H2SO4 concentration (% w/w)',effluentsTitle:'Incoming effluents',addEffluent:'Add effluent',effluentName:'Effluent',effVol:'Volume (m³)',effPh:'pH',effTypeAuto:'Type (automatic)',acidic:'Acidic',basic:'Basic',neutral:'Neutral',resultsTitle:'Results',stateCard:'Initial state',methodCard:'Neutralization mode',reagentCard:'Required reagent/effluent',calcCard:'Technical calculation data',neutralizationMode:'Neutralization mode',modeLabel:'Mode',modeCombined:'Effluent + Chemical',modeEffluent:'Effluent',modeChemical:'Chemical',modeChemicals:'Chemicals',requiredAmount:'Estimated required amount',idealLegend:'This is an ideal stoichiometric estimate and does not account for alkalinity, buffers, or side reactions.',homeBtn:'Home',backBtn:'Back',nextBtn:'Next',tabLanguage:'Language',tabTask:'Task',tabState:'State',tabEff:'Effluents',tabNeu:'Calculation',tabRes:'Results',errSelectTask:'Please select a task.',errPh:'pH must be between 0 and 14.',levelLow:'Tank level is low.',levelHigh:'Tank level is too high.',levelInvalid:'Enter a valid numeric level.',nearNeutral:'pH close to 7: minimal or no adjustment required.',species:'Neutralized species',eqNeutralize:'Estimated equivalents',methodCalc:'Method',overflow:'Warning: projected level exceeds tank maximum height.',neutralizerPhLH:'LH effluent pH (base)',neutralizerPhIX:'IX effluent pH (acid)',invalidNeutralizerPh:'Enter a valid pH between 0 and 14.',invalidReferenceType:'Reference pH is not coherent with the selected effluent type',invalidNeutralizingCapacity:'Invalid neutralizing capacity (check reference pH)',stoichMethodText:'Ideal stoichiometry with target pH',typeLabel:'Type',concentrationLabel:'Concentration',referencePhLabel:'Reference pH',volumeLabel:'Volume',levelDeltaLabel:'Level Δ',projectedLevelLabel:'Projected level',welcomeTitle:'pH Calculator - WWT - Utilities - LH Güemes Production Department',welcomeDescription:'Neutralization reagent calculation for the water treatment plant.',selectLanguageText:'Select language',langEnglish:'English',langSpanish:'Español',langKorean:'한국어',newTankLevel:'New tank height',newTankPh:'New tank pH',conditioningPumpNote:'* Considering that the submerged pump addition represents 2.5 m3.',calcError:'Could not compute technical result.',minAdjustment:'Minimum adjustment / not required.',conditioningDoseTitle:'Reagent to neutralize (L)',developerBtn:'Developer',closeBtn:'Close',copyBtn:'Copy',copiedMsg:'Summary copied.',copyErrorMsg:'Could not copy automatically.',summaryBtn:'Summary',summaryTitle:'Calculation summary',summaryInitial:'Initial state',summaryAdded:'Addition',summaryFinal:'Final state',summaryTaskLabel:'Task',summarySelectedModeLabel:'Selected mode',summaryTargetPhLabel:'Target pH',summaryReferencePhLabel:'Reference pH',summaryTheoreticalVolumeLabel:'Theoretical volume',summarySafetyFactorLabel:'Safety factor',summaryRequiredVolumeLabel:'Required volume',summaryPumpExtraLabel:'Pump addition',summaryIncomingEffluentsLabel:'Loaded effluents',summaryNoEffluents:'No effluents loaded.',summaryStepLabel:'Step',summaryChemicalSettingsLabel:'Chemical settings',stageAfterEffluentsTitle:'1) Final state after receiving effluents',stageAdditionTitle:'Added chemical or effluent for neutralization',stageFinalTitle:'3) Final state after neutralization',equivalentHeightLabel:'Equivalent height',recommendedLabel:'Recommended',notAvailableLabel:'Not available',notRecommendedLabel:'Not recommended',effluentAvailabilityLabel:'Effluent availability',effluentNameLabel:'Effluent name',maxEffluentLabel:'Maximum effluent volume',effluentVolumeLabel:'Effluent volume',neutralizerPhLabel:'Effluent pH',targetPhLabel:'Target pH',targetPhNote7:'Neutralization',targetPhNote8:'Neutralization + Medium concentrations',targetPhNote85:'Neutralization + High concentrations',criteriaLabel:'Recommended criterion',yesLabel:'Yes',noLabel:'No',finalTankStateTitle:'Final tank state',effluentBlockTitle:'Effluent',chemicalBlockTitle:'Chemical',intermediatePhLabel:'Intermediate pH',finalPhLabel:'Final pH',additionCombinedTitle:'Effluent + chemical addition',additionEffluentTitle:'Effluent addition',additionChemicalTitle:'Chemical addition'},
+        ko:{taskTitle:'작업을 선택하세요',taskReception:'폐수 수령',taskConditioning:'pH 조정',taskConditioningHelp:'WWB 탱크 pH만 약품 또는 중화 폐수로 보정할 때 사용합니다.',taskReceptionHelp:'WWB에 유입 폐수를 받을 때 사용합니다: 먼저 혼합/최종 상태를 계산하고 이후 중화량을 계산합니다.',tankTitleWWB:'WWB 탱크 초기 상태',levelMm:'수위 (mm)',phLabel:'pH',volumeHint:'기준: 10 m³ = 166.66 mm',estimatedVolumeLabel:'추정 부피 (m³)',estimatedVolume:'{value}',settingsBtn:'설정',chemicalsOptionalTitle:'약품 (선택)',naohConcentration:'NaOH 농도 (% w/w)',h2so4Concentration:'H2SO4 농도 (% w/w)',effluentsTitle:'유입 폐수',addEffluent:'폐수 추가',effluentName:'폐수',effVol:'부피 (m³)',effPh:'pH',effTypeAuto:'유형 (자동)',acidic:'산성',basic:'염기성',neutral:'중성',resultsTitle:'결과',stateCard:'초기 상태',methodCard:'중화 방식',reagentCard:'필요 시약/폐수',calcCard:'기술 계산 데이터',neutralizationMode:'중화 모드',modeLabel:'모드',modeCombined:'폐수 + 약품',modeEffluent:'폐수',modeChemical:'약품',modeChemicals:'약품',requiredAmount:'예상 필요량',idealLegend:'본 계산은 이상적인 화학양론 추정이며 알칼리도, 완충, 부반응을 고려하지 않습니다.',homeBtn:'홈',backBtn:'뒤로',nextBtn:'다음',tabLanguage:'언어',tabTask:'작업',tabState:'상태',tabEff:'폐수',tabNeu:'계산',tabRes:'결과',errSelectTask:'작업을 선택하세요.',errPh:'pH는 0~14 범위여야 합니다.',levelLow:'탱크 수위가 낮습니다.',levelHigh:'탱크 수위가 너무 높습니다.',levelInvalid:'유효한 수치 수위를 입력하세요.',nearNeutral:'pH가 7에 가까워 조정이 거의 필요하지 않습니다.',species:'중화 대상 종',eqNeutralize:'중화 등가량',methodCalc:'방법',overflow:'경고: 예상 수위가 탱크 최대 높이를 초과합니다.',neutralizerPhLH:'LH 폐수 pH (염기)',neutralizerPhIX:'IX 폐수 pH (산)',invalidNeutralizerPh:'0~14 사이의 유효한 pH를 입력하세요.',invalidReferenceType:'기준 pH가 선택한 폐수 유형과 일치하지 않습니다',invalidNeutralizingCapacity:'중화 용량이 유효하지 않습니다 (기준 pH 확인)',stoichMethodText:'목표 pH 기반 이상 화학양론',typeLabel:'유형',concentrationLabel:'농도',referencePhLabel:'기준 pH',volumeLabel:'부피',levelDeltaLabel:'수위 Δ',projectedLevelLabel:'예상 수위',welcomeTitle:'pH 계산기 - WWT - Utilities - LH Güemes 생산 부서',welcomeDescription:'수처리 플랜트용 중화 시약 계산.',selectLanguageText:'언어 선택',langEnglish:'English',langSpanish:'Español',langKorean:'한국어',newTankLevel:'탱크 새 높이',newTankPh:'탱크 새 pH',conditioningPumpNote:'* 잠수 펌프 추가분 2.5 m3를 고려함.',calcError:'기술 계산 결과를 생성할 수 없습니다.',minAdjustment:'최소 조정 / 불필요.',conditioningDoseTitle:'중화 필요 시약 (L)',developerBtn:'개발자',closeBtn:'닫기',copyBtn:'복사',copiedMsg:'요약이 복사되었습니다.',copyErrorMsg:'자동 복사에 실패했습니다.',summaryBtn:'요약',summaryTitle:'계산 요약',summaryInitial:'초기 상태',summaryAdded:'추가',summaryFinal:'최종 상태',summaryTaskLabel:'작업',summarySelectedModeLabel:'선택 모드',summaryTargetPhLabel:'목표 pH',summaryReferencePhLabel:'기준 pH',summaryTheoreticalVolumeLabel:'이론 부피',summarySafetyFactorLabel:'안전 계수',summaryRequiredVolumeLabel:'필요 부피',summaryPumpExtraLabel:'펌프 추가량',summaryIncomingEffluentsLabel:'입력된 폐수',summaryNoEffluents:'입력된 폐수가 없습니다.',summaryStepLabel:'단계',summaryChemicalSettingsLabel:'약품 설정',stageAfterEffluentsTitle:'1) 폐수 수령 후 최종 상태',stageAdditionTitle:'중화를 위한 약품/폐수 추가',stageFinalTitle:'3) 중화 후 최종 상태',equivalentHeightLabel:'등가 높이',recommendedLabel:'권장',notAvailableLabel:'사용 불가',notRecommendedLabel:'비권장',effluentAvailabilityLabel:'폐수 사용 가능 여부',effluentNameLabel:'폐수 이름',maxEffluentLabel:'최대 폐수 사용량',effluentVolumeLabel:'폐수 사용량',neutralizerPhLabel:'폐수 pH',targetPhLabel:'목표 pH',targetPhNote7:'중화',targetPhNote8:'중화 + 중간 농도',targetPhNote85:'중화 + 높은 농도',criteriaLabel:'권장 기준',yesLabel:'예',noLabel:'아니오',finalTankStateTitle:'최종 탱크 상태',effluentBlockTitle:'폐수',chemicalBlockTitle:'약품',intermediatePhLabel:'중간 pH',finalPhLabel:'최종 pH',additionCombinedTitle:'폐수 + 약품 투입',additionEffluentTitle:'폐수 투입',additionChemicalTitle:'약품 투입'}
+      };
+
+      const state={selectedLanguage:'es',selectedTask:'',tankState:{levelMm:NaN,volumeM3:0,pH:NaN},chemicals:{naohPct:30,h2so4Pct:98},effluents:[{name:'LH',volumeM3:NaN,pH:NaN}],neutralization:{mode:'chemicals',referencePh:12.5},neutralizationStrategy:{effluentAvailable:true,maxEffluentM3:10,recommendedMode:'combined',selectedMode:'combined',targetPh:7},tutorial:{selecting:false,active:false,mode:'',stepIndex:0,steps:[],waitingAdvance:false}};
+      let currentScreen='language';
+      const $=id=>document.getElementById(id); const t=k=>tr[state.selectedLanguage][k]??k; const fmt=(v,n=3)=>Number(v).toFixed(n); const num=(v,fb=NaN)=>{ if(typeof v==='number') return Number.isFinite(v)?v:fb; const n=Number(String(v).replace(',', '.').trim()); return Number.isFinite(n)?n:fb; };
+      const setFieldTone=(el,tone)=>{ if(!el) return; el.classList.remove('input-empty','input-valid','input-invalid'); if(tone) el.classList.add(tone); };
+      const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      const mmToM3=mm=>(Number(mm)||0)*(CAL.MM_EQ_M3_DEN/CAL.MM_EQ_M3_NUM); const m3ToL=m3=>(Number(m3)||0)*1000; const m3ToMm=m3=>(Number(m3)||0)*(CAL.MM_EQ_M3_NUM/CAL.MM_EQ_M3_DEN);
+      const hFromPh=ph=>Math.pow(10,-Math.min(14,Math.max(0,Number(ph)||0))); const ohFromPh=ph=>Math.pow(10,-(14-Math.min(14,Math.max(0,Number(ph)||0))));
+      const naohEqPerL=pct=>((CAL.naohDensity[pct]||CAL.naohDensity[30])*(pct/100)*1000)/CAL.PM_NAOH; const h2so4EqPerL=pct=>(((CAL.h2so4Density[pct]||CAL.h2so4Density[98])*(pct/100)*1000)/CAL.PM_H2SO4)*2;
+      const flow=()=>state.selectedTask==='Recepción de Efluentes'?['language','task','state','effluents','neutralization','results']:['language','task','state','neutralization','results'];
+
+      function effluentKind(ph){ if(ph>7) return 'basic'; if(ph<7) return 'acidic'; return 'neutral'; }
+      function renderTabs(){ const m={language:'tabLanguage',task:'tabTask',state:'tabState',effluents:'tabEff',neutralization:'tabNeu',results:'tabRes'}; $('tabs').innerHTML=flow().map(s=>`<span class="tab ${s===currentScreen?'active':''}">${t(m[s])}</span>`).join(''); }
+      function setError(msg){ $('screenError').textContent=msg; }
+      function renderTaskHelp(){
+        const card=$('taskHelpCard');
+        if(!state.selectedTask){ card.style.display='none'; return; }
+        const isConditioning=state.selectedTask==='Ajuste de pH';
+        $('taskHelpTitle').textContent=t(isConditioning?'taskConditioning':'taskReception');
+        $('taskHelpText').textContent=t(isConditioning?'taskConditioningHelp':'taskReceptionHelp');
+        card.style.display='block';
+      }
+      function validateState(){
+        const lRaw=$('tankLevelMm').value.trim(), pRaw=$('tankPh').value.trim();
+        let lOk=true,pOk=true,lMsg='',pMsg='';
+        const l=num(lRaw), p=num(pRaw);
+        if(lRaw===''||Number.isNaN(l)){lOk=false;lMsg=t('levelInvalid')} else if(l<1200){lOk=false;lMsg=t('levelLow')} else if(l>4000){lOk=false;lMsg=t('levelHigh')}
+        if(pRaw===''||Number.isNaN(p)||p<0||p>14){pOk=false;pMsg=t('errPh')}
+        $('levelError').textContent=lMsg; $('phError').textContent=pMsg;
+        setFieldTone($('tankLevelMm'), lRaw===''?'input-empty':(lOk?'input-valid':'input-invalid'));
+        setFieldTone($('tankPh'), pRaw===''?'input-empty':(pOk?'input-valid':'input-invalid'));
+        if(lOk) state.tankState.levelMm=l; if(pOk) state.tankState.pH=p; state.tankState.volumeM3=mmToM3(state.tankState.levelMm);
+        $('estimatedVolume').textContent=lOk?t('estimatedVolume').replace('{value}',fmt(state.tankState.volumeM3,2)):t('estimatedVolume').replace('{value}','--');
+        return lOk&&pOk;
+      }
+      function isValid(screen){
+        if(screen==='task'&&!state.selectedTask){setError(t('errSelectTask'));return false;}
+        if(screen==='state'&&!validateState()){setError('');return false;}
+        if(screen==='effluents'){for(const e of state.effluents){const vol=num(e.volumeM3), ph=num(e.pH); if(!Number.isFinite(vol)||vol<0||!Number.isFinite(ph)||ph<0||ph>14){setError(t('errPh'));return false;}}}
+        if(screen==='neutralization'){
+          const mode=state.neutralizationStrategy.selectedMode;
+          const p=num(state.neutralization.referencePh);
+          if(mode!=='chemical' && (!Number.isFinite(p)||p<0||p>14)){ setError(t('invalidNeutralizerPh')); return false; }
+          if(mode!=='chemical'){
+            const mixed=state.selectedTask==='Recepción de Efluentes'?
+              mixStreams({volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH},state.effluents):
+              {volumeM3:mmToM3(state.tankState.levelMm),levelMm:state.tankState.levelMm,pH:state.tankState.pH};
+            const pre=calculateNeutralizationForState(mixed,{mode:'effluent',safetyFactor:1.25,pumpExtraM3:0,targetPh:getTargetPh(),referencePh:p});
+            if(pre.result.errorMessage){ setError(pre.result.errorMessage); return false; }
+          }
+        }
+        setError(''); return true;
+      }
+
+      function renderEffluents(){
+        const names=['LH','BPED','IX','LS'];
+        $('effluentList').innerHTML=state.effluents.map((e,i)=>`<div class="effluent-item"><div class="grid grid-3"><div class="field"><label>${t('effluentName')} ${i+1}</label><select data-ix="${i}" data-f="name">${names.map(n=>`<option value="${n}" ${e.name===n?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>${t('effVol')}</label><input data-ix="${i}" data-f="volumeM3" type="number" min="0" step="0.01" placeholder="Ej. 10.50" value="${Number.isFinite(Number(e.volumeM3))?e.volumeM3:''}" /></div><div class="field"><label>${t('effPh')}</label><input data-ix="${i}" data-f="pH" type="number" min="0" max="14" step="0.01" placeholder="Ej. 6.80" value="${Number.isFinite(Number(e.pH))?e.pH:''}" /></div></div><div class="notice">${t('effTypeAuto')}: <b class="eff-kind" data-kind-ix="${i}">${t(effluentKind(Number(e.pH)||7))}</b>${i>0?` &nbsp; <button class='btn' data-remove='${i}' type='button'>-</button>`:''}</div></div>`).join('');
+
+        $('effluentList').querySelectorAll('select[data-f="name"]').forEach(el=>{
+          setFieldTone(el,'input-valid');
+          el.addEventListener('change',e=>{const ix=Number(e.target.dataset.ix); state.effluents[ix].name=e.target.value; setFieldTone(e.target,'input-valid'); renderResults();});
+        });
+        $('effluentList').querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('input',e=>{
+          const ix=Number(e.target.dataset.ix), f=e.target.dataset.f, raw=e.target.value;
+          state.effluents[ix][f]=raw===''?NaN:num(raw);
+          const v=num(raw);
+          const ok=f==='pH' ? (Number.isFinite(v)&&v>=0&&v<=14) : (Number.isFinite(v)&&v>=0);
+          setFieldTone(e.target, raw===''?'input-empty':(ok?'input-valid':'input-invalid'));
+          if(f==='pH'){ const kindEl=$('effluentList').querySelector(`[data-kind-ix="${ix}"]`); if(kindEl) kindEl.textContent=t(effluentKind(Number(state.effluents[ix].pH)||7)); }
+          renderResults();
+        }));
+        $('effluentList').querySelectorAll('input[data-f]').forEach(el=>{
+          const raw=el.value.trim(), f=el.dataset.f, v=num(raw);
+          const ok=f==='pH' ? (Number.isFinite(v)&&v>=0&&v<=14) : (Number.isFinite(v)&&v>=0);
+          setFieldTone(el, raw===''?'input-empty':(ok?'input-valid':'input-invalid'));
+        });
+        $('effluentList').querySelectorAll('[data-remove]').forEach(el=>el.addEventListener('click',()=>{ state.effluents.splice(Number(el.dataset.remove),1); renderEffluents(); renderNeutralization(); renderResults(); }));
+      }
+
+      function calculateEqToNeutralize(ph, volumeL, targetPh=7){
+        const p=Math.min(14,Math.max(0,Number(ph)||0)), target=Math.pow(10,-targetPh);
+        if(p<targetPh) return {species:'H+', eq:Math.max((hFromPh(p)-target)*volumeL,0)};
+        if(p>targetPh) return {species:'OH-', eq:Math.max((ohFromPh(p)-target)*volumeL,0)};
+        return {species:'', eq:0};
+      }
+      function calculateEffluentEqPerL(ph, kind){ return kind==='LH'?ohFromPh(ph):hFromPh(ph); }
+
+      function mixStreams(baseTank, effluents){
+        let totalM3=Math.max(0,num(baseTank.volumeM3,0)), totalH=0, totalOH=0;
+        const baseL=m3ToL(totalM3), basePh=Math.min(14,Math.max(0,num(baseTank.pH,7))); 
+        if(basePh<7) totalH+=hFromPh(basePh)*baseL; else if(basePh>7) totalOH+=ohFromPh(basePh)*baseL;
+        effluents.forEach(e=>{
+          const vm3=Math.max(0,num(e.volumeM3,0)), eph=Math.min(14,Math.max(0,num(e.pH,7))), l=m3ToL(vm3);
+          totalM3+=vm3;
+          if(eph<7) totalH+=hFromPh(eph)*l; else if(eph>7) totalOH+=ohFromPh(eph)*l;
+        });
+        const totalL=m3ToL(totalM3);
+        let ph=7;
+        if(totalL>0){
+          if(totalH>totalOH) ph=-Math.log10(Math.max((totalH-totalOH)/totalL,1e-14));
+          else if(totalOH>totalH) ph=14+Math.log10(Math.max((totalOH-totalH)/totalL,1e-14));
+        }
+        return {volumeM3:totalM3, levelMm:num(baseTank.levelMm,0)+m3ToMm(totalM3-num(baseTank.volumeM3,0)), pH:Math.min(14,Math.max(0,ph))};
+      }
+
+      function calculateNeutralizationForState(srcState, options={}){
+        const safetyFactor=num(options.safetyFactor,1.25)||1.25, pumpExtraM3=num(options.pumpExtraM3,0)||0, targetPh=num(options.targetPh,CAL.PH_TARGET)||CAL.PH_TARGET;
+        const src={volumeM3:Math.max(0,num(srcState.volumeM3,0)), levelMm:Math.max(0,num(srcState.levelMm,0)), pH:Math.min(14,Math.max(0,num(srcState.pH,7)))};
+        const {species,eq}=calculateEqToNeutralize(src.pH, m3ToL(src.volumeM3), targetPh);
+        const mode=options.mode||'chemicals';
+        let type='', conc=null, ref=null, eqL=0, errorMessage='';
+        if(species==='H+'){
+          if(mode==='effluent'){ type='LH'; ref=Number.isFinite(num(options.referencePh))?num(options.referencePh):12; }
+          else { type='NaOH'; conc=num(state.chemicals.naohPct,30)||30; eqL=naohEqPerL(conc); }
+        } else if(species==='OH-'){
+          if(mode==='effluent'){ type='IX'; ref=Number.isFinite(num(options.referencePh))?num(options.referencePh):1; }
+          else { type='H2SO4'; conc=num(state.chemicals.h2so4Pct,98)||98; eqL=h2so4EqPerL(conc); }
+        }
+
+        if(mode==='effluent' && type){
+          if((type==='IX' && ref>=7) || (type==='LH' && ref<=7)) errorMessage='invalidReferenceType';
+          eqL=errorMessage?0:calculateEffluentEqPerL(ref,type);
+          if(!errorMessage && eq>0 && eqL<1e-6) errorMessage='invalidNeutralizingCapacity';
+        }
+
+        const requiredVolumeTheoreticalL=(eq>0&&eqL>0)?(eq/eqL):0;
+        const safeTheo=Number.isFinite(requiredVolumeTheoreticalL)&&requiredVolumeTheoreticalL>0?requiredVolumeTheoreticalL:0;
+        const minimal=safeTheo<0.5;
+        const requiredVolumeFinalL=safeTheo*safetyFactor;
+        const requiredVolumeFinalM3=requiredVolumeFinalL/1000;
+        const finalTankVolumeM3=Math.max(0,src.volumeM3+requiredVolumeFinalM3+pumpExtraM3);
+        const finalTankLevelMm=Math.max(0,m3ToMm(finalTankVolumeM3));
+        const finalPh=(species&&requiredVolumeFinalL>0)?targetPh:src.pH;
+        const hasError=errorMessage!=='' || ![src.volumeM3,src.levelMm,eq,eqL,requiredVolumeFinalL,finalTankVolumeM3,finalTankLevelMm].every(v=>Number.isFinite(v));
+        return {src,mode,species,type,conc,ref,eqL:Math.max(eqL,0),eq:reqLteq(eq),reqL:requiredVolumeFinalL,reqM3:requiredVolumeFinalM3,dMm:m3ToMm(requiredVolumeFinalM3),proj:finalTankLevelMm,
+          result:{targetPh,currentPh:src.pH,requiredType:type,requiredConcentration:conc,equivalentsToNeutralize:Math.max(eq,0),reagentEqPerL:Math.max(eqL,0),requiredVolumeTheoreticalL:safeTheo,requiredVolumeFinalL,requiredVolumeFinalM3,pumpExtraM3,finalTankVolumeM3,finalTankLevelMm,finalPh,minimal,hasError,errorMessage:errorMessage?t(errorMessage):''}};
+      }
+      function reqLteq(v){ return Math.max(num(v,0)||0,0); }
+
+      function recommendMode(basePh, effluentAvailable){
+        const p=Math.min(14,Math.max(0,num(basePh,7)));
+        if(!effluentAvailable) return 'chemical';
+        if(p<3||p>11) return 'combined';
+        if((p>=3&&p<5)||(p>9&&p<=11)) return 'effluent';
+        return 'chemical';
+      }
+      function strategyToCalcMode(selectedMode){ return selectedMode==='effluent' ? 'effluent' : 'chemicals'; }
+      function modeIsAvailable(mode, effluentAvailable){ return true; }
+
+      function getTargetPh(){ return num(state.neutralizationStrategy.targetPh,7)||7; }
+      function renderTargetPhButtons(){ const tp=getTargetPh(); [$('targetPh7'),$('targetPh8'),$('targetPh85')].forEach(b=>b.classList.toggle('active',num(b.dataset.targetPh,7)===tp)); }
+      function getAutoEffluentName(ph){ return num(ph,7)<7?'LH':'IX'; }
+
+      function estimatePhAfterCounterDose(srcPh, srcVolumeM3, species, counterEqPerL, addL){
+        const baseL=m3ToL(srcVolumeM3);
+        const totalL=Math.max(baseL+Math.max(addL,0),1e-9);
+        let totalH=srcPh<7?hFromPh(srcPh)*baseL:0;
+        let totalOH=srcPh>7?ohFromPh(srcPh)*baseL:0;
+        const addEq=Math.max(counterEqPerL,0)*Math.max(addL,0);
+        if(species==='H+') totalOH+=addEq;
+        if(species==='OH-') totalH+=addEq;
+        if(totalH>totalOH) return Math.min(14,Math.max(0,-Math.log10(Math.max((totalH-totalOH)/totalL,1e-14))));
+        if(totalOH>totalH) return Math.min(14,Math.max(0,14+Math.log10(Math.max((totalOH-totalH)/totalL,1e-14))));
+        return 7;
+      }
+
+      function calc(){
+        const isConditioning=state.selectedTask==='Ajuste de pH';
+        const targetPh=getTargetPh();
+        if(isConditioning){
+          const src={volumeM3:mmToM3(state.tankState.levelMm),levelMm:state.tankState.levelMm,pH:state.tankState.pH};
+          const selectedMode=state.neutralizationStrategy.selectedMode;
+          const refPh=Number.isFinite(num(state.neutralization.referencePh))?num(state.neutralization.referencePh):(src.pH<7?12:1);
+          const pumpExtraM3=2.5;
+
+          if(selectedMode==='chemical'){
+            const n=calculateNeutralizationForState(src,{mode:'chemicals',safetyFactor:1.25,pumpExtraM3,targetPh});
+            state.neutralization={...state.neutralization,...n.result};
+            return {...n,stage:'chemical',displayState:src};
+          }
+
+          const effN=calculateNeutralizationForState(src,{mode:'effluent',safetyFactor:1.25,pumpExtraM3:0,targetPh,referencePh:refPh});
+          const maxEffM3=Math.max(0,num(state.neutralizationStrategy.maxEffluentM3,10));
+          const usedEffM3=Math.min(effN.reqM3,maxEffM3);
+          const usedEffL=m3ToL(usedEffM3);
+          const interPh=estimatePhAfterCounterDose(src.pH,src.volumeM3,effN.species,effN.eqL,usedEffL);
+          const interState={volumeM3:src.volumeM3+usedEffM3,levelMm:src.levelMm+m3ToMm(usedEffM3),pH:interPh};
+
+          if(selectedMode==='effluent'){
+            const finalVolumeM3=interState.volumeM3+pumpExtraM3;
+            const finalLevelMm=m3ToMm(finalVolumeM3);
+            const result={...effN.result,requiredVolumeFinalL:usedEffL,requiredVolumeFinalM3:usedEffM3,pumpExtraM3,finalTankVolumeM3:finalVolumeM3,finalTankLevelMm:finalLevelMm,finalPh:interPh};
+            state.neutralization={...state.neutralization,...result};
+            return {...effN,reqL:usedEffL,reqM3:usedEffM3,dMm:m3ToMm(usedEffM3),proj:finalLevelMm,result,displayState:src,interState,chemAfter:null};
+          }
+
+          const chemN=calculateNeutralizationForState(interState,{mode:'chemicals',safetyFactor:1.25,pumpExtraM3,targetPh});
+          const final={
+            ...chemN,
+            reqL:usedEffL+chemN.reqL,
+            reqM3:usedEffM3+chemN.reqM3,
+            result:{...chemN.result,finalTankVolumeM3:chemN.result.finalTankVolumeM3,finalTankLevelMm:chemN.result.finalTankLevelMm,finalPh:chemN.result.finalPh}
+          };
+          state.neutralization={...state.neutralization,...final.result};
+          return {...final,displayState:src,interState,effStep:effN,usedEffM3,usedEffL,chemAfter:chemN};
+        }
+
+        const mixed=state.selectedTask==='Recepción de Efluentes'?
+          mixStreams({volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH},state.effluents):
+          {volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH};
+        const calcMode=strategyToCalcMode(state.neutralizationStrategy.selectedMode);
+        const n=calculateNeutralizationForState(mixed,{mode:calcMode,safetyFactor:1.25,pumpExtraM3:0,referencePh:state.neutralization.referencePh,targetPh});
+        state.neutralization={...state.neutralization,...n.result};
+        return n;
+      }
+
+      function asMetricChips(items){ return `<div class="metric-chips">${items.map(i=>`<div class="metric-chip ${i.added?'added-chip':''}">${i.label}<b>${i.value}</b></div>`).join('')}</div>`; }
+      function summaryRows(rows){ return `<div class="summary-list">${rows.map(r=>`<div class="summary-row"><div class="summary-key">${escapeHtml(r.label)}</div><div>${escapeHtml(r.value)}</div></div>`).join('')}</div>`; }
+      function summaryTextSection(title, rows){ return `${title}\n${rows.map(r=>`- ${r.label}: ${r.value}`).join('\n')}`; }
+      function buildSummaryPayload(){
+        const n=calc();
+        if(n.result.hasError) return {html:`<div class='warn'>${t('calcError')}</div>`,text:t('calcError')};
+        const isReception=state.selectedTask==='Recepción de Efluentes';
+        const isConditioning=state.selectedTask==='Ajuste de pH';
+        const initialLevel=num(state.tankState.levelMm,0), initialM3=mmToM3(initialLevel), initialPh=num(state.tankState.pH,7);
+        const selectedMode=state.neutralizationStrategy.selectedMode;
+        const initialRows=[{label:t('levelMm'),value:`${fmt(initialLevel,2)} mm`},{label:t('volumeLabel'),value:`${fmt(initialM3,3)} m³`},{label:t('phLabel'),value:fmt(initialPh,2)}];
+        const addedRows=[{label:t('summarySelectedModeLabel'),value:t(selectedMode==='combined'?'modeCombined':selectedMode==='effluent'?'modeEffluent':'modeChemical')},{label:t('summaryTargetPhLabel'),value:fmt(getTargetPh(),2)}];
+        if(selectedMode!=='chemical') addedRows.push({label:t('summaryReferencePhLabel'),value:Number.isFinite(num(state.neutralization.referencePh))?fmt(state.neutralization.referencePh,2):'-'});
+        addedRows.push({label:t('summaryChemicalSettingsLabel'),value:`NaOH ${state.chemicals.naohPct}% | H2SO4 ${state.chemicals.h2so4Pct}%`});
+        if(isReception){
+          const effRows=state.effluents.filter(e=>Number.isFinite(num(e.volumeM3))||Number.isFinite(num(e.pH))).map((e,i)=>({label:`${t('effluentName')} ${i+1}`,value:`${e.name||'-'} | ${t('effVol')}: ${Number.isFinite(num(e.volumeM3))?`${fmt(e.volumeM3,3)} m³`:'-'} | ${t('effPh')}: ${Number.isFinite(num(e.pH))?fmt(e.pH,2):'-'}`}));
+          if(effRows.length) addedRows.push(...effRows); else addedRows.push({label:t('summaryIncomingEffluentsLabel'),value:t('summaryNoEffluents')});
+        }
+        if(isConditioning && selectedMode==='combined' && n.chemAfter){
+          addedRows.push({label:`${t('summaryStepLabel')} 1`,value:`${t('effluentBlockTitle')} | ${t('typeLabel')}: ${n.effStep.result.requiredType||'-'} | ${t('summaryReferencePhLabel')}: ${Number.isFinite(num(state.neutralization.referencePh))?fmt(state.neutralization.referencePh,2):'-'} | ${t('summaryRequiredVolumeLabel')}: ${fmt(n.usedEffM3||0,3)} m³ | ${t('intermediatePhLabel')}: ${fmt((n.interState&&n.interState.pH)||initialPh,2)}`});
+          addedRows.push({label:`${t('summaryStepLabel')} 2`,value:`${t('chemicalBlockTitle')} | ${t('typeLabel')}: ${n.chemAfter.result.requiredType||'-'} | ${t('concentrationLabel')}: ${n.chemAfter.result.requiredConcentration||'-'}% | ${t('summaryTheoreticalVolumeLabel')}: ${fmt(n.chemAfter.result.requiredVolumeTheoreticalL,2)} L | ${t('summaryRequiredVolumeLabel')}: ${fmt(n.chemAfter.result.requiredVolumeFinalL,2)} L`});
+        } else {
+          addedRows.push({label:t('typeLabel'),value:n.result.requiredType||'-'});
+          if(Number.isFinite(num(n.result.requiredConcentration))) addedRows.push({label:t('concentrationLabel'),value:`${n.result.requiredConcentration}%`});
+          addedRows.push({label:t('summaryRequiredVolumeLabel'),value:n.result.requiredType==='LH'||n.result.requiredType==='IX'||selectedMode==='effluent'?`${fmt(n.reqM3||n.result.requiredVolumeFinalM3,3)} m³`:`${fmt(n.result.requiredVolumeFinalL,2)} L`});
+        }
+        if(isConditioning) addedRows.push({label:t('summaryPumpExtraLabel'),value:'2.50 m³'});
+        const finalRows=[{label:t('levelMm'),value:`${fmt(n.result.finalTankLevelMm,2)} mm`},{label:t('volumeLabel'),value:`${fmt(n.result.finalTankVolumeM3,3)} m³`},{label:t('phLabel'),value:fmt(n.result.finalPh,2)}];
+        const html=`<div class="summary-compact"><div class="card"><h4>${t('summaryInitial')}</h4>${summaryRows(initialRows)}</div><div class="card" style="margin-top:8px;"><h4>${t('summaryAdded')}</h4>${summaryRows(addedRows)}</div><div class="card" style="margin-top:8px;"><h4>${t('summaryFinal')}</h4>${summaryRows(finalRows)}</div></div>`;
+        const text=[summaryTextSection(t('summaryInitial'),initialRows),summaryTextSection(t('summaryAdded'),addedRows),summaryTextSection(t('summaryFinal'),finalRows)].join('\n\n');
+        return {html,text};
+      }
+
+      function renderNeutralization(){
+        const isReception=state.selectedTask==='Recepción de Efluentes';
+        const base=isReception?
+          mixStreams({volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH},state.effluents):
+          {volumeM3:mmToM3(state.tankState.levelMm),levelMm:state.tankState.levelMm,pH:state.tankState.pH};
+        const basePh=num(base.pH,7);
+        state.neutralizationStrategy.recommendedMode=recommendMode(basePh,true);
+        const selectedMode=state.neutralizationStrategy.selectedMode;
+        $('effluentNameAuto').value=getAutoEffluentName(basePh);
+        if(!Number.isFinite(num(state.neutralization.referencePh))){ state.neutralization.referencePh=basePh<7?12:1; } if(document.activeElement!==$('neutralizerPh')) $('neutralizerPh').value=Number.isFinite(num(state.neutralization.referencePh))?String(state.neutralization.referencePh):'';
+        $('effluentConfig').style.display=(selectedMode==='chemical')?'none':'grid'; $('neutralizerPh').disabled=(selectedMode==='chemical');
+        setFieldTone($('maxEffluentM3'),'input-valid');
+        const neutralRaw=$('neutralizerPh').value.trim(), neutralVal=num(neutralRaw);
+        const neutralOk=Number.isFinite(neutralVal)&&neutralVal>=0&&neutralVal<=14;
+        setFieldTone($('neutralizerPh'), selectedMode==='chemical' ? '' : (neutralRaw===''?'input-empty':(neutralOk?'input-valid':'input-invalid')));
+        [$('modeCombinedBtn'),$('modeEffBtn'),$('modeChemBtn')].forEach(b=>b.classList.toggle('active',b.dataset.mode===selectedMode));
+        $('modeHints').innerHTML=[{mode:'combined'},{mode:'effluent'},{mode:'chemical'}].map(x=>{ const rec=x.mode===state.neutralizationStrategy.recommendedMode; const txt=rec?t('recommendedLabel'):''; const cls=rec?'recommended':''; return `<div class="mode-hint ${cls}">${txt}</div>`; }).join('');
+        $('mixedStateCalcCard').style.display=isReception?'block':'none';
+        $('mixedStateCalcSummary').innerHTML=isReception?asMetricChips([{label:t('levelMm'),value:`${fmt(num(base.levelMm,0),2)} mm`},{label:t('volumeLabel'),value:`${fmt(num(base.volumeM3,0),3)} m³`},{label:t('phLabel'),value:fmt(num(base.pH,7),2)}]):'';
+        const preview=calculateNeutralizationForState(base,{mode:'effluent',safetyFactor:1.25,pumpExtraM3:0,targetPh:getTargetPh(),referencePh:state.neutralization.referencePh});
+        $('neutralizerPhError').textContent=preview.result.errorMessage||'';
+        $('modeCriterion').textContent=''; renderTargetPhButtons();
+      }
+
+      function renderResults(){
+        const n=calc();
+        const isConditioning=state.selectedTask==='Ajuste de pH';
+        const isReception=state.selectedTask==='Recepción de Efluentes';
+        const initialLevel=num(state.tankState.levelMm,0), initialM3=mmToM3(initialLevel), initialPh=num(state.tankState.pH,7);
+        const mixedState=isReception?mixStreams({volumeM3:state.tankState.volumeM3,levelMm:state.tankState.levelMm,pH:state.tankState.pH},state.effluents):null;
+
+        if(n.result.hasError){
+          $('mixedStateResultsCard').style.display=isReception?'block':'none';
+          const errMsg=n.result.errorMessage||t('calcError'); $('afterEffluentsSummary').innerHTML=`<div class='warn'>${errMsg}</div>`;
+          $('mixedStateResultsSummary').innerHTML='';
+          $('additionSummary').innerHTML='';
+          $('finalAfterNeutralizationSummary').innerHTML='';
+          return;
+        }
+
+        $('afterEffluentsSummary').innerHTML=asMetricChips([{label:t('levelMm'),value:`${fmt(initialLevel,2)} mm`},{label:t('volumeLabel'),value:`${fmt(initialM3,3)} m³`},{label:t('phLabel'),value:fmt(initialPh,2)}]);
+        $('mixedStateResultsCard').style.display=isReception?'block':'none';
+        $('mixedStateResultsSummary').innerHTML=isReception?asMetricChips([{label:t('levelMm'),value:`${fmt(num(mixedState.levelMm,0),2)} mm`},{label:t('volumeLabel'),value:`${fmt(num(mixedState.volumeM3,0),3)} m³`},{label:t('phLabel'),value:fmt(num(mixedState.pH,7),2)}]):'';
+
+        const selectedMode=state.neutralizationStrategy.selectedMode;
+        $('additionTitle').textContent=t(selectedMode==='combined'?'additionCombinedTitle':selectedMode==='effluent'?'additionEffluentTitle':'additionChemicalTitle');
+        if(isConditioning && selectedMode==='combined' && n.chemAfter){
+          const effType=(n.effStep&&n.effStep.result&&n.effStep.result.requiredType)||getAutoEffluentName(initialPh);
+          const chemType=(n.chemAfter.result&&n.chemAfter.result.requiredType)||'-';
+          const interPh=(n.interState&&n.interState.pH)||initialPh;
+          $('additionSummary').innerHTML=`<div class="combined-split"><div class="card"><h4>${t('effluentBlockTitle')}</h4>${asMetricChips([{label:t('typeLabel'),value:effType},{label:t('volumeLabel'),value:`${fmt(n.usedEffM3||0,3)} m³`,added:true},{label:t('intermediatePhLabel'),value:fmt(interPh,2)}])}</div><div class="plus-center">+</div><div class="card"><h4>${t('chemicalBlockTitle')}</h4>${asMetricChips([{label:t('typeLabel'),value:chemType},{label:t('volumeLabel'),value:`${fmt(n.chemAfter.result.requiredVolumeFinalL,2)} L`,added:true},{label:t('finalPhLabel'),value:fmt(n.result.finalPh,2)}])}</div></div>`;
+        } else if(selectedMode==='effluent'){
+          $('additionSummary').innerHTML=asMetricChips([{label:t('typeLabel'),value:n.result.requiredType||getAutoEffluentName(initialPh)},{label:t('effluentVolumeLabel'),value:`${fmt(n.reqM3,3)} m³`,added:true},{label:t('intermediatePhLabel'),value:fmt(n.result.finalPh,2)}]);
+        } else {
+          $('additionSummary').innerHTML=asMetricChips([{label:t('typeLabel'),value:n.result.requiredType||'-'},{label:t('volumeLabel'),value:`${fmt(n.result.requiredVolumeFinalL,2)} L`,added:true},{label:t('finalPhLabel'),value:fmt(n.result.finalPh,2)}]);
+        }
+
+        $('finalAfterNeutralizationSummary').innerHTML=asMetricChips([{label:t('levelMm'),value:`${fmt(n.result.finalTankLevelMm,2)} mm`},{label:t('volumeLabel'),value:`${fmt(n.result.finalTankVolumeM3,3)} m³`},{label:t('phLabel'),value:fmt(n.result.finalPh,2)}]);
+        $('conditioningNote').style.display=isConditioning?'block':'none';
+        $('conditioningNote').textContent=t('conditioningPumpNote');
+        $('overflowWarn').style.display=n.result.finalTankLevelMm>CAL.TANK_MAX_MM?'block':'none';
+        $('overflowWarn').textContent=n.result.finalTankLevelMm>CAL.TANK_MAX_MM?t('overflow'):'';
+      }
+
+      function buildSelects(){ $('naohPct').innerHTML=[10,20,30,40,50].map(v=>`<option value='${v}'>${v}%</option>`).join(''); $('h2so4Pct').innerHTML=[98,90,80,70,60,50,40,30].map(v=>`<option value='${v}'>${v}%</option>`).join(''); $('naohPct').value=state.chemicals.naohPct; $('h2so4Pct').value=state.chemicals.h2so4Pct; setFieldTone($('naohPct'),'input-valid'); setFieldTone($('h2so4Pct'),'input-valid'); }
+
+      const tutorialCatalog={
+        unico:[
+          {screen:'task',target:'taskConditioningBtn',text:'Ajuste de pH: usar cuando solo necesitás corregir el pH de la pileta WWB.'},
+          {screen:'state',target:'tankLevelMm',text:'Cargar altura inicial de la pileta. Cuando termines, el tutorial te marca Siguiente en amarillo.'},
+          {screen:'state',target:'tankPh',text:'Cargar pH actual de la pileta. Podés escribir con el tutorial abierto.'},
+          {screen:'neutralization',target:'modeBlock',text:'Seleccionar estrategia y pH objetivo de neutralización.'},
+          {screen:'results',target:'additionCard',text:'Revisar el agregado recomendado y el estado final.'}
+        ],
+        multiple:[
+          {screen:'task',target:'taskReceptionBtn',text:'Recepción de efluentes: usar cuando ingresan corrientes para mezclar y luego neutralizar.'},
+          {screen:'effluents',target:'addEffluentBtn',text:'Agregar todos los efluentes recibidos.'},
+          {screen:'effluents',target:'effluentList',text:'Completar volumen y pH de cada corriente. Al completar, desaparece el pop up y queda Siguiente en amarillo.'},
+          {screen:'neutralization',target:'mixedStateCalcCard',text:'Verificar el estado de mezcla antes de neutralizar.'},
+          {screen:'results',target:'mixedStateResultsCard',text:'Confirmar la mezcla y luego la neutralización final.'}
+        ]
+      };
+
+      function setTaskTutorialSelectionMode(on){
+        state.tutorial.selecting=on;
+        const base=[$('taskConditioningBtn'),$('taskReceptionBtn')];
+        if(on){
+          base.forEach(b=>{ b.classList.add('tutorial-mode'); b.classList.remove('active'); });
+        }else{
+          base.forEach(b=>{ b.classList.remove('tutorial-mode'); b.classList.remove('active'); });
+          renderI18n();
+        }
+      }
+
+      function clearTutorialVisuals(){
+        document.querySelectorAll('.tour-highlight').forEach(el=>el.classList.remove('tour-highlight'));
+        $('tourOverlay').style.display='none';
+        $('tourPopup').style.display='none';
+        $('btnNext').classList.remove('tutorial-next-ready');
+      }
+
+      function finishTutorial(){
+        state.tutorial.active=false;
+        state.tutorial.mode='';
+        state.tutorial.stepIndex=0;
+        state.tutorial.steps=[];
+        state.tutorial.waitingAdvance=false;
+        clearTutorialVisuals();
+        setTaskTutorialSelectionMode(false);
+      }
+
+      function positionTourPopup(targetEl){
+        const popup=$('tourPopup');
+        const r=targetEl.getBoundingClientRect();
+        const margin=12;
+        const vw=window.innerWidth, vh=window.innerHeight;
+        let left=Math.min(Math.max(r.left,margin),vw-popup.offsetWidth-margin);
+        let top=r.bottom+10;
+        if(top+popup.offsetHeight>vh-margin) top=Math.max(margin,r.top-popup.offsetHeight-10);
+        popup.style.left=`${left}px`;
+        popup.style.top=`${top}px`;
+      }
+
+      function showTutorialStep(){
+        if(!state.tutorial.active) return;
+        const step=state.tutorial.steps[state.tutorial.stepIndex];
+        if(!step){ finishTutorial(); return; }
+        state.tutorial.waitingAdvance=false;
+        $('btnNext').classList.remove('tutorial-next-ready');
+        if(currentScreen!==step.screen) show(step.screen);
+        const el=$(step.target);
+        if(!el){ finishTutorial(); return; }
+        document.querySelectorAll('.tour-highlight').forEach(n=>n.classList.remove('tour-highlight'));
+        $('tourOverlay').style.display='block';
+        $('tourPopup').style.display='block';
+        $('tourPopupText').textContent=step.text;
+        el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+        setTimeout(()=>{
+          el.classList.add('tour-highlight');
+          positionTourPopup(el);
+          $('tourPrevBtn').disabled=state.tutorial.stepIndex===0;
+          $('tourNextBtn').disabled=state.tutorial.stepIndex>=state.tutorial.steps.length-1;
+        },120);
+      }
+
+      function markTutorialStepReady(){
+        if(!state.tutorial.active||state.tutorial.waitingAdvance) return;
+        state.tutorial.waitingAdvance=true;
+        $('tourOverlay').style.display='none';
+        $('tourPopup').style.display='none';
+        $('btnNext').classList.add('tutorial-next-ready');
+      }
+
+      function handleTutorialUserAction(evt){
+        if(!state.tutorial.active||state.tutorial.waitingAdvance) return;
+        const step=state.tutorial.steps[state.tutorial.stepIndex];
+        if(!step) return;
+        const el=$(step.target);
+        if(!el) return;
+        if(el===evt.target||el.contains(evt.target)) markTutorialStepReady();
+      }
+
+      function startTutorial(mode){
+        state.tutorial.active=true;
+        state.tutorial.mode=mode;
+        state.tutorial.stepIndex=0;
+        state.tutorial.steps=tutorialCatalog[mode]||[];
+        state.tutorial.waitingAdvance=false;
+        setTaskTutorialSelectionMode(false);
+        showTutorialStep();
+      }
+
+      function renderI18n(){
+        document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+        document.documentElement.lang=state.selectedLanguage;
+        buildSelects();
+        renderTabs();
+        $('main-title').textContent=t('welcomeTitle');
+        $('main-description').textContent=t('welcomeDescription');
+        $('language-label').textContent=t('selectLanguageText');
+        $('welcomeNextButton').textContent=t('nextBtn');
+        $('langBtnEn').textContent=t('langEnglish');
+        $('langBtnEs').textContent=t('langSpanish');
+        $('langBtnKo').textContent=t('langKorean');
+        document.querySelectorAll('.language-button').forEach(b=>b.classList.toggle('active',b.dataset.lang===state.selectedLanguage));
+        if(!state.tutorial.selecting){
+          $('taskReceptionBtn').textContent=t('taskReception');
+          $('taskConditioningBtn').textContent=t('taskConditioning');
+        }
+        renderTaskHelp();
+        [$('taskReceptionBtn'),$('taskConditioningBtn')].forEach(b=>b.classList.toggle('active',b.dataset.task===state.selectedTask));
+        $('modeCombinedBtn').textContent=t('modeCombined');
+        $('modeEffBtn').textContent=t('modeEffluent');
+        $('modeChemBtn').textContent=t('modeChemical');
+        $('btnSummary').textContent=t('summaryBtn');
+        $('maxEffluentM3').value=String(state.neutralizationStrategy.maxEffluentM3);
+        if($('tankLevelMm').value.trim()!==''||$('tankPh').value.trim()!==''){ validateState(); }
+        else { $('levelError').textContent=''; $('phError').textContent=''; $('estimatedVolume').textContent=t('estimatedVolume').replace('{value}','--'); setFieldTone($('tankLevelMm'),'input-empty'); setFieldTone($('tankPh'),'input-empty'); }
+        renderEffluents(); renderNeutralization(); renderResults();
+      }
+
+      function bind(){
+        document.querySelectorAll('.language-button').forEach(btn=>btn.addEventListener('click',()=>{state.selectedLanguage=btn.dataset.lang;renderI18n();}));
+        $('welcomeNextButton').addEventListener('click',()=>show('task'));
+        $('taskConditioningBtn').addEventListener('click',()=>{
+          if(state.tutorial.selecting){ state.selectedTask='Ajuste de pH'; $('taskConditioningBtn').classList.add('active'); startTutorial('unico'); return; }
+          state.selectedTask='Ajuste de pH'; renderI18n();
+        });
+        $('taskReceptionBtn').addEventListener('click',()=>{
+          if(state.tutorial.selecting){ state.selectedTask='Recepción de Efluentes'; $('taskReceptionBtn').classList.add('active'); startTutorial('multiple'); return; }
+          state.selectedTask='Recepción de Efluentes'; renderI18n();
+        });
+        $('tutorialBtn').addEventListener('click',()=>{ show('task'); setTaskTutorialSelectionMode(true); });
+        $('tourOverlay').addEventListener('click',()=>{});
+        $('tourPrevBtn').addEventListener('click',()=>{ if(state.tutorial.stepIndex>0){ state.tutorial.stepIndex-=1; showTutorialStep(); }});
+        $('tourNextBtn').addEventListener('click',()=>{ if(state.tutorial.stepIndex<state.tutorial.steps.length-1){ state.tutorial.stepIndex+=1; showTutorialStep(); }});
+        $('tourFinishBtn').addEventListener('click',finishTutorial);
+        document.addEventListener('click',handleTutorialUserAction,true);
+        document.addEventListener('input',handleTutorialUserAction,true);
+        document.addEventListener('change',handleTutorialUserAction,true);
+        $('settingsBtn').addEventListener('click',()=>$('settingsPanel').classList.toggle('open'));
+        $('tankLevelMm').addEventListener('input',()=>{validateState(); $('btnNext').disabled=currentScreen==='state'?!validateState():false; renderNeutralization(); renderResults();});
+        $('tankPh').addEventListener('input',()=>{validateState(); $('btnNext').disabled=currentScreen==='state'?!validateState():false; renderNeutralization(); renderResults();});
+        $('addEffluentBtn').addEventListener('click',()=>{state.effluents.push({name:'LH',volumeM3:NaN,pH:NaN}); renderEffluents(); renderNeutralization(); renderResults();});
+        $('naohPct').addEventListener('change',e=>{state.chemicals.naohPct=Number(e.target.value); renderResults();});
+        $('h2so4Pct').addEventListener('change',e=>{state.chemicals.h2so4Pct=Number(e.target.value); renderResults();});
+        [$('modeCombinedBtn'),$('modeEffBtn'),$('modeChemBtn')].forEach(btn=>btn.addEventListener('click',()=>{ state.neutralizationStrategy.selectedMode=btn.dataset.mode; renderNeutralization(); renderResults(); }));
+        $('maxEffluentM3').addEventListener('change',e=>{ state.neutralizationStrategy.maxEffluentM3=num(e.target.value,10); renderResults(); });
+        [$('targetPh7'),$('targetPh8'),$('targetPh85')].forEach(btn=>btn.addEventListener('click',()=>{ state.neutralizationStrategy.targetPh=num(btn.dataset.targetPh,7); renderNeutralization(); renderResults(); }));
+        $('neutralizerPh').addEventListener('input',e=>{state.neutralization.referencePh=num(e.target.value); renderNeutralization(); renderResults();});
+        $('developerBtn').addEventListener('click',()=>$('devModal').classList.add('open'));
+        $('devCloseBtn').addEventListener('click',()=>$('devModal').classList.remove('open'));
+        $('devModal').addEventListener('click',e=>{ if(e.target.id==='devModal') $('devModal').classList.remove('open'); });
+        $('btnSummary').addEventListener('click',openSummary);
+        $('summaryCloseBtn').addEventListener('click',()=>$('summaryModal').classList.remove('open'));
+        $('summaryCopyBtn').addEventListener('click',copySummary);
+        $('summaryModal').addEventListener('click',e=>{ if(e.target.id==='summaryModal') $('summaryModal').classList.remove('open'); });
+        $('btnHome').addEventListener('click',()=>{ finishTutorial(); show('language'); });
+        $('btnBack').addEventListener('click',()=>{const f=flow();const i=f.indexOf(currentScreen);if(i>0)show(f[i-1]);});
+        $('btnNext').addEventListener('click',()=>{
+          const f=flow();
+          const i=f.indexOf(currentScreen);
+          if(!isValid(currentScreen))return;
+          if(i<f.length-1){
+            show(f[i+1]);
+            if(f[i+1]==='results')renderResults();
+            if(state.tutorial.active&&state.tutorial.waitingAdvance){
+              state.tutorial.stepIndex+=1;
+              if(state.tutorial.stepIndex>=state.tutorial.steps.length) finishTutorial();
+              else showTutorialStep();
+            }
+          }
+        });
+      }
+
+
+      function show(id){
+        currentScreen=id;
+        ['language','task','state','effluents','neutralization','results'].forEach(scr=>$('screen-'+scr).classList.toggle('active',scr===id));
+        $('btnBack').disabled=id==='language';
+        const hide=id==='language';
+        $('tabs').style.display=hide?'none':'flex';
+        $('globalNav').style.display=hide?'none':'flex';
+        if(state.tutorial.selecting && id!=='task') setTaskTutorialSelectionMode(false);
+        $('developerLaunchWrap').style.display=(id==='language'||id==='task')?'flex':'none';
+        if(id!=='language') $('devModal').classList.remove('open'); if(id!=='results') $('summaryModal').classList.remove('open');
+        renderTabs();
+        if(id==='state'){
+          const hasAny=$('tankLevelMm').value.trim()!==''||$('tankPh').value.trim()!=='';
+          $('btnNext').disabled=hasAny?!validateState():true;
+          if(!hasAny){
+            $('levelError').textContent=''; $('phError').textContent='';
+            setFieldTone($('tankLevelMm'),'input-empty'); setFieldTone($('tankPh'),'input-empty');
+          }
+        } else if(id==='neutralization'){
+          renderNeutralization();
+          $('btnNext').disabled=false;
+        } else {
+          $('btnNext').disabled=false;
+        }
+        $('btnSummary').style.display=id==='results'?'inline-block':'none';
+        $('btnNext').style.display=id==='results'?'none':'inline-block';
+      }
+
+      
+      function openSummary(){
+        const summary=buildSummaryPayload();
+        $('summaryBody').innerHTML=summary.html;
+        $('summaryBody').dataset.copyText=summary.text;
+        $('summaryCopyStatus').textContent='';
+        $('summaryModal').classList.add('open');
+      }
+      async function copySummary(){
+        const text=$('summaryBody').dataset.copyText||'';
+        try{
+          if(navigator.clipboard&&navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+          else{
+            const ta=document.createElement('textarea');
+            ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+          }
+          $('summaryCopyStatus').textContent=t('copiedMsg');
+        }catch(_err){
+          $('summaryCopyStatus').textContent=t('copyErrorMsg');
+        }
+      }
+
+      function init(){ state.tankState.volumeM3=0; $('tankLevelMm').value=''; $('tankPh').value=''; bind(); renderI18n(); show('language'); verifyKnownCases(); }
+
+      function verifyKnownCases(){
+        const c1=calculateNeutralizationForState({volumeM3:mmToM3(2000),levelMm:2000,pH:12.5},{mode:'chemicals',safetyFactor:1.25,pumpExtraM3:2.5});
+        const c2=calculateNeutralizationForState({volumeM3:mmToM3(3810),levelMm:3810,pH:2.45},{mode:'chemicals',safetyFactor:1.25,pumpExtraM3:2.5});
+        console.info('check_case_1_H2SO4_L', fmt(c1.result.requiredVolumeFinalL,2));
+        console.info('check_case_2_NaOH_L', fmt(c2.result.requiredVolumeFinalL,2));
+      }
+      init();
+    </script>
+  </body>
+</html>
